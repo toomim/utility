@@ -1,0 +1,41 @@
+{{extend 'keystroke/klayout.html'}}
+<div>
+    <h2>Questionnaire</h2>
+    <div class="error-box">
+    {{if form.errors:}}
+        {{uniqueErrors = list(set(form.errors.values()))}}
+        {{for error in uniqueErrors:}}
+            <div class="alert alert-error">{{=error}}</div>
+        {{pass}}
+        {{form.errors.clear()}}
+    {{pass}}
+    </div>
+    
+    {{=form}}
+    <script type="text/javascript">
+        $('input[name=age]').focus();
+        
+        $("#enrolled-form").submit(function(event) {
+            var age = $("input[name=age]", this).val();
+            var gender = $("input[name=gender]:checked", this).val();
+            var occupation = $("input[name=occupation]", this).val();
+            var income = $("input[name=income]:checked", this).val();
+            var biometric = $("[name=biometric]:checked", this);
+            var verifier = $("[name=verify]:checked", this);
+            if (!age || !gender || !occupation || !income || !biometric.length || !verifier.length) {
+                validation_error("Please answer all of the questions.");
+                event.preventDefault();
+                return false;
+            }
+            
+            age = parseInt(age);
+            if (isNaN(age)) {
+                validation_error("Please provide your age in years.");
+                event.preventDefault()
+                return false;
+            }
+            
+            return true;
+        });
+    </script>
+</div>

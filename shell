@@ -1,0 +1,2 @@
+cd web2py
+python web2py.py -M -N -S utility/utiliscope -p 8222

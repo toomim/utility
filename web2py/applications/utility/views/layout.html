@@ -1,0 +1,40 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
+<head>
+<meta http-equiv="content-type" content="text/html; charset=utf-8" />
+<title>the UTILISCOPE</title>
+<link rel="stylesheet" type="text/css" href="/static/css/styles.css" />
+{{ if theme == 'black': }}
+  <link rel="stylesheet" type="text/css" href="/static/css/styleb.css" />
+{{ elif theme == 'whitepink': }}
+<style>
+  a,h1,h2,h2,th { color: rgb(255, 0, 163); }
+  body { color: #444; font-size: 11pt; font-family: georgia, serif;}
+</style>
+{{ pass }}
+
+{{include 'web2py_ajax.html'}}
+
+</head>
+
+{{ def midflash(): }}
+        {{if response.midflash:}}
+        <div class="flash midflash" style="display: hidden;">{{=response.midflash}}</div>
+        {{pass}}
+{{ pass }}
+
+<style>
+body { padding: 15px 20px 0 20px; }
+</style>
+<body>
+        {{if response.flash:}}
+        <div class="flash" style="display: hidden;">{{=response.flash}}</div>
+        {{pass}}
+
+        {{include}}
+
+        {{if response.footflash:}}
+        <div class="flash" style="display: hidden;">{{=response.footflash}}</div>
+        {{pass}}
+</body>
+</html>

@@ -1,0 +1,51 @@
+{{extend 'layout.html'}}
+
+<style>
+  div.mysterybox {
+	border: 2px solid #aaa;
+  	width: 300px;
+	text-align: center;
+	font-size: 120px;
+	position: absolute;
+	padding: 40px;
+	margin: 0px;
+   height: 150px;
+  }
+  #mb2 {
+	font-size: 50px;
+  }
+  h1 {font-size: 50px; margin-bottom: 40px; }
+  p {font-size: 20px;}
+  .c1 {color: #2a2}
+  .c2 {color: #953}
+</style>
+
+<div style="position: absolute; margin-left: 430px;">
+  <p>Current Task: <span class="c1">???</span>
+  Current Price: <span class="c2">???</span></p>
+</div>
+
+<h1>Mystery Task</h1>
+
+<div style="position: absolute; margin-left: 430px;">
+  <p>Accept today's hit to see it.</p>
+  <p>Return it if you don't like it.</p>
+  <p>Task and price changes each day.</p>
+  <!--<p>Some days have better deals than others.</p>-->
+</div>
+
+<div id="mb1" class="mysterybox"><span class="c2">?</span><span class="c1">?</span><span class="c2">?</span><span class="c1">?</span></div>
+<div id="mb2" class="mysterybox"><span class="c2">Accept me to see me</span></div>
+
+
+<script>
+var curr = 0;
+var mbs = [$("#mb2"), $("#mb1")];
+function cycle() {
+  mbs[curr].fadeOut();
+  curr = (curr+1) % mbs.length;
+  mbs[curr].fadeIn();
+}
+setInterval(cycle, 2000);
+cycle();
+</script>

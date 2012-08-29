@@ -1,0 +1,17 @@
+{{extend 'layout.html'}}
+<style>body {margin: 10px;}</style>
+<script type="text/javascript" src="../../static/highcharts.js"></script>
+{{ include 'barchart.html' }}
+
+{{ i = 0 }}
+{{ for var_data in data: }}
+   {{ var = var_data[0] }}
+  <p>For {{=var}}:</p>
+<div>
+{{  bardata = [x[1] for x in var_data[1]]
+	 barchart(bardata, i)
+	 i += 1}}
+	{{pass}}
+</div>
+{{pass}}
+

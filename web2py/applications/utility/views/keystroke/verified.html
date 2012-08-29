@@ -1,0 +1,26 @@
+{{extend 'keystroke/klayout.html'}}
+<div>
+    <h2>Questionnaire</h2>
+    <div class="error-box">
+    {{if form.errors:}}
+        {{uniqueErrors = list(set(form.errors.values()))}}
+        {{for error in uniqueErrors:}}
+            <div class="alert alert-error">{{=error}}</div>
+        {{pass}}
+        {{form.errors.clear()}}
+    {{pass}}
+    </div>
+    {{=form}}
+    <script type="text/javascript">
+        $("#verified-form").submit(function(event) {
+            var frustration = $(":radio[name=frustration]:checked", this);
+            var animal = $(":radio[name=verify]:checked", this);
+            if (!frustration.length || !animal.length) {
+                validation_error("Please answer all of the questions.");
+                event.preventDefault();
+                return false;
+            }
+            return true;
+        });
+    </script>
+</div>

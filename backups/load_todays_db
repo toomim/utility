@@ -1,0 +1,1 @@
+dropdb utility_sandbox && createdb -T template0 utility_sandbox && pg_restore -c -d utility_sandbox utility_`date +%Y-%m-%d`

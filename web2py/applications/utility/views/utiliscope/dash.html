@@ -1,0 +1,73 @@
+{{extend 'layout.html'}}
+
+<a href="/"><div class="sublogo" style="position: absolute;">Us</div></a>
+<h1 style="margin-left: 60px; margin-top: 0px;">Dashboard</h1>
+<br>
+
+Currently serving {{=num_open_hits()}} hits<br><br>
+
+<table>
+<tr><td style="width: 450px">
+<h3>Web server</h3>
+<iframe id="debug_iframe" src="/static/debug"
+	style="position: absolute; "
+		width="400" height="500"></iframe>
+</td><td style="width: 400px">
+<h3>Background tasks</h3>
+<iframe id="tasks_iframe" src="/static/debug_tasks"
+		width="400" height="500"></iframe>
+</td>
+<td>
+  <button id="space" style="padding: 5px; margin-top: 473px; margin-left: -87px;">
+    Toss in some<br>blank lines<br>to both logs
+  </button>
+</td>
+</tr>
+</table>
+
+
+<script>
+$.ajaxSetup ({
+    // Disable caching of AJAX responses
+    cache: false
+});
+
+function scroll_bottom(el) {
+	el.contentWindow.scrollTo(0,1000000);
+}
+function setup_iframe() {
+	scroll_bottom(this);
+	$(this.contentWindow.document.body).children().css('font-size','8px');
+}
+
+$('iframe')[0].onload = setup_iframe;
+$('iframe')[1].onload = setup_iframe;
+function reload () {
+	$('iframe').each(function () {
+		var iframe = this;
+		var doc_height = $(iframe.contentWindow.document).height();
+		var win_height = $(iframe.contentWindow).height();
+		var rescroll = (iframe.contentWindow.scrollY == doc_height - win_height);
+
+		$(iframe.contentWindow.document.body).children().load(
+			iframe.src, function () {if (rescroll) scroll_bottom(iframe);});
+	});
+}
+
+setInterval(reload, 500);
+
+$('#space').click(function () {
+	$.ajax({
+		type: "POST",
+		url: "/utiliscope/add_log_blanks"
+	})});
+
+</script>
+
+
+<style>
+iframe {
+   background-color: #ddd;
+   color: #eee;
+}
+</style>

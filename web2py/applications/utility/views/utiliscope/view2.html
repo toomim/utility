@@ -1,0 +1,213 @@
+{{extend 'layout.html'}}
+<style>body {margin: 30px;}</style>
+		<!-- 1. Add these JavaScript inclusions in the head of your page -->
+		<script type="text/javascript" src="/utility/static/highcharts.js"></script>
+		<script type="text/javascript" src="../../static/highcharts.js"></script>
+
+		<!--[if IE]>
+			<script type="text/javascript" src="/utility/static/excanvas.compiled.js"></script>
+		<![endif]-->
+		
+		
+		<!-- 2. Add the JavaScript to initialize the chart on document ready -->
+		<script type="text/javascript">
+		var chart1, chart2;
+		$(document).ready(function() {
+			chart1 = new Highcharts.Chart({
+				/*colors: ["#9c9ede", "#7375b5", "#4a5584", "#cedb9c", "#b5cf6b", "#8ca252", "#637939", "#e7cb94", "#e7ba52", "#bd9e39", "#8c6d31", "#e7969c", "#d6616b", "#ad494a", "#843c39", "#de9ed6", "#ce6dbd", "#a55194", "#7b4173"].reverse(),*/
+				chart: {
+					renderTo: 'lines container',
+					defaultSeriesType: 'line',
+					margin: [50, 150, 60, 80],
+					zoomType: 'xy'
+				},
+				title: {
+					text: 'Percentage of workers who stick with the task after doing N of them',
+					style: {
+						margin: '10px 100px 0 0' // center it
+					}
+				},
+				subtitle: {
+					text: '',
+					style: {
+						margin: '0 100px 0 0' // center it
+					}
+				},
+				xAxis: {
+					title: {
+						text: 'Tasks completed', enabled: true,
+					},
+					plotLines: [{
+						value: 0,
+						width: 1,
+						color: '#808080'
+					}]
+				},
+				yAxis: {
+					title: {
+						text: 'Percentage of workers'
+					},
+					plotLines: [{
+						value: 0,
+						width: 1,
+						color: '#808080'
+					}]
+				},
+				tooltip: {
+					formatter: function() {
+						var workers = this.y.toFixed(0);
+						var jobs = this.x;
+
+			                return /*'<b>'+ this.series.name +'</b><br/>'+*/ '' +
+							/*(workers / 100.0 * { { =price_data['pageloaders'] } }) + ' or ' +*/
+							workers +'% of workers got through ' + jobs + ' jobs';
+                     /*+ (this.y/{ { =pageloaders } } * 100).toFixed(0)*/
+					}
+				},
+				legend: {
+					layout: 'vertical',
+					style: {
+						left: 'auto',
+						bottom: 'auto',
+						right: '10px',
+						top: '100px'
+					}
+				},
+				credits: { enabled: false },
+				series: [
+				  {{ for price_data in data: }}
+
+            {
+					/*marker: {radius: 3},*/
+					name: '{{='%s (%d hits, %d workers)' % (price_data['condition'], price_data['num_hits'], price_data['pageloaders'])}}',
+					data: {{=price_data['histogram']}}
+			
+				},
+				 {{ pass }}
+
+
+				/*{
+					name: 'New York',
+					data: [-0.2, 0.8, 5.7, 11.3, 17.0, 22.0, 24.8, 24.1, 20.1, 14.1, 8.6, 2.5]
+				}*/
+			]
+			});
+			
+			chart1.xAxis[0].setExtremes(0,70)
+		});
+		</script>
+		
+		<script type="text/javascript">
+		var chart2;
+		$(document).ready(function() {
+			chart2 = new Highcharts.Chart({
+				chart: {
+					renderTo: 'bars container',
+					defaultSeriesType: 'column',
+					zoomType: 'xy'
+				},
+				title: {
+					text: 'hits per worker',
+				},
+				xAxis: {
+					categories: ' ',
+					title: {
+						text: 'x title', enabled: false,
+					}
+				},
+				credits: { enabled: false },
+				yAxis: {
+					title: {
+						enabled: false,
+						text: 'Percentage of workers'
+					}
+				},
+				legend: { enabled: false },
+				tooltip: {
+					formatter: function() {
+						var work = this.y.toFixed(1);
+			         return '' + work + ' hits completed per worker';
+					}
+				},
+				series: [
+				  {{ for datum in data: }}
+
+              { name: '{{='%s (%.2f hits/impression)' % (datum['condition'], float(datum['num_hits'])/float(datum['pageloaders']))}}',
+                data: [{{= float(datum['num_hits']) / float(datum['pageloaders']) }}] },
+				 {{ pass }}
+
+			]
+			});
+
+			chart2.yAxis[0].setExtremes(0,15);
+
+		});
+
+		</script>
+
+
+
+
+	</head>
+	<body>
+		
+<div style="width: 300px; float: right;">
+{{=XML(time_range[0].strftime("<b>%I:%M %p</b> %a, %B %d %Y"))}}<br>
+study notes: {{=study.description}}
+
+<br><a href="{{=url('dolores', args=request.args, vars=request.vars)}}">switch to dolores</a>
+</div>
+<h2>Plotting work for <span style="color: #555555">{{=study.name}}</span></h2>
+	Graphing {{=num_hits_total}} hits.
+<div style="clear: both;"></div>
+
+		<!-- 3. Add the container -->
+		<div style="">
+			<div id="lines container" style="width: 900px; height: 500px; margin: 0"></div>
+
+			<div id="bars container" style="width: 250px; height: 200px; margin: 0"></div>
+		</div>
+	<!-- slider -->
+	<style type="text/css">
+		#demo-frame > div.demo { padding: 10px !important; };
+	</style>
+	<script type="text/javascript">
+	function hours(seconds) { return (seconds/60/60).toFixed(2); }
+	var time_range = [{{=request.vars.filter_start or 0}}, {{=request.vars.filter_end or time_length}}];
+	$(function() {
+		$("#slider-range").slider({
+			range: true,
+			min: 0,
+			max: {{=time_length}},
+			values: time_range,
+			slide: function(event, ui) {
+				$("#amount").val('hour ' + hours(ui.values[0]) + ' to hour ' + hours(ui.values[1]));
+				time_range[0] = ui.values[0];
+				time_range[1] = ui.values[1];
+			}
+		});
+		$("#amount").val('hour ' + hours($("#slider-range").slider("values", 0)) + ' to hour ' + hours($("#slider-range").slider("values", 1)));
+	});
+	</script>
+
+<div class="demo">
+<p><label for="amount">Time range:</label>
+<input type="text" id="amount" style="border:0; color:#f6931f; font-weight:bold;" /></p>
+
+<div id="slider-range" style="width: 400px;"></div>
+<a href="#" onclick="window.location='{{=url("view", args=request.args)}}?&filter_start=' + time_range[0] + '&filter_end=' + time_range[1];">redraw</a>
+</div>
+
+
+{{ if example_hit: }}
+<h2>What the turkers saw in each condition</h2>
+<ul>
+{{ for i,c in condition: }}
+<li><a href="/utility/{{=study.controller_func}}?testing=True&hitId={{=example_hit.hitid}}&condition={{=i}}">see an example</a> of {{=str(c)}}</li>
+{{ pass }}
+</ul>
+{{ pass }}
+
+<br>
+<h2>Worker feedback</h2>
+{{= study_feedback(study) }}

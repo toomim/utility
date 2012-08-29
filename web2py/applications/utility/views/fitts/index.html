@@ -1,0 +1,162 @@
+{{extend 'layout.html'}}
+
+<style>
+#box {
+  width: {{=width}};
+  height: {{=height}};
+  left: {{=left}};
+  top: {{=top}};
+  position: absolute;
+  background-color: #259;
+}
+#box.clicked { background-color: #bbb; }
+#instr {
+/* position: relative;
+ top: 400px;*/
+}
+#wrap { width: 100%; height: {{=iframe_height-150}}px; }
+.c1 {color: #185360;}
+.c2 {color: #585858;}
+#resizemsg {
+	display: none;
+	position: absolute;
+	width: 100%; height: {{=iframe_height}}px;
+	background-color: #259;
+	color: #fff;
+	z-index: 234;
+	padding: 90px;
+}
+#submitmsg {
+	display: none;
+	position: absolute;
+	width: 100%; height: {{=iframe_height}}px;
+	background-color: #fff;
+	color: #000;
+	z-index: 234;
+	padding: 90px;
+}
+h2 {letter-spacing: normal;}
+</style>
+
+<div id="resizemsg"><h1>Make your browser window wider.</h1><h1>It must be at least {{=iframe_width}} pixels</h1><br><br><br><br><br></div>
+
+<div id="submitmsg"><h1><span style="color: #050">Yeah you are done!  Submitting...</span></h1><p>Your bonus will be visible in your "transaction history" soon.</p><br><br>
+<h1 id="success" style="display: none;"><span style="color: #050">Success!</span></h1><br><br><br></div>
+
+{{foo = ' <span style="font-size: 20px;" class="c2">(Note: this batch is free)</span>' if request.price == 0.0 else '' }}
+
+<div id="instr">
+<h2><span class="c2">Task:</span> Click the blue object {{=request.num_tasks}} times
+    &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+    <span class="c2">Pay:</span> {{=request.price_string}} {{=XML(foo)}}</h2>
+<p>You will be paid a {{=request.price_string}} bonus after completing all {{=request.num_tasks}}.</p>
+</div>
+<p id="count"></p>
+<div id="wrap" style="position: relative;">
+<div id="box" onmousedown="clicky()"></div>
+</div>
+
+
+<script>
+var ajax_url = "{{=URL(r=request, args=request.args, vars=request.vars)}}";
+var count = {{=request.num_tasks}};
+
+var last_click = new Date();
+var last_ajax_reply = new Date()
+var last_ajax_delay = 0;
+
+var clicks = [];
+var haderror = false;
+
+{{ if request.style == 'classic fitts': }}
+function moveme() {
+    if ((count % 2) == 0) {
+		$('#box')[0].style.left = '0px';
+	} else {
+		$('#box')[0].style.left = '{{=iframe_width - int(width[:-2])}}px';
+	}
+	$('#box').removeClass('clicked');
+}
+{{ else: }}
+// function moveme(data) {
+// 	$('#box')[0].style.left = data.left;
+// 	$('#box')[0].style.top = data.top;
+// 	$('#box')[0].style.width = data.width;
+// 	$('#box')[0].style.height = data.height;
+// }
+{{ pass }}
+
+function error() {
+	$('#submitmsg')[0].style.display = 'block';
+	$('#box').addClass('clicked');
+	$.post(ajax_url,
+		   {ajax: true,
+			clicks: clicks,//$.toJSON(clicks),
+			error: haderror},
+		   function(data) {
+			   if (data && data.redirect) {
+				   //$('#success')[0].style.display = 'block';
+				   setTimeout('window.location.href = "' + data.redirect + '";', 1500);
+				   return true;
+			   }
+		   },
+		   'json');
+	haderror = false;
+}
+function spaghetti () {
+	$.post(ajax_url,
+		   {ajax: true,
+			click_time: new Date() - last_click,
+			ajax_load_time: last_ajax_delay},
+		   function(data) {
+			   if (data) {
+				   if (data.redirect) {
+					   $('#success')[0].style.display = 'block';
+					   setTimeout('window.location.href = ' + data.redirect + ';', 5000);
+					   return true;
+				   }
+				   $('#count')[0].innerHTML = data.count + ' left';
+			   }
+			   //$('#box').removeClass('clicked');
+			   last_ajax_reply = new Date();
+			   last_ajax_delay = last_ajax_reply - last_click;
+		   },
+		   'json');
+}
+function clicky () {
+	clicks.push({click_time: new Date() - last_click, count: count});
+	$('#box').addClass('clicked');
+	last_click = new Date();
+	count--;
+	$('#count')[0].innerHTML = count + ' left';
+	moveme();
+	if (2 && 3 && (false || (2-2))) spaghetti();
+ 	if (count == 0) error()
+}
+moveme();
+$('#wrap')[0].ondblclick = function (event) { 
+	if (!event) event = window.event;
+   if (event.preventDefault) 
+      event.preventDefault();
+   else 
+      event.returnValue = false;
+   return false;
+};
+
+function pagewidth() { return window.innerWidth != null ? window.innerWidth : document.documentElement && document.documentElement.clientWidth ? document.documentElement.clientWidth : document.body != null ? document.body.clientWidth : null; }
+
+function check_width() {
+  if (pagewidth() < {{=iframe_width}})
+    $('#resizemsg')[0].style.display = 'block';
+  else
+    $('#resizemsg')[0].style.display = 'none';
+}
+setInterval(check_width, 200);
+
+$('#wrap').ajaxError(function () {
+	haderror = true;
+	if (count == 0) setTimeout(error, 100);
+	//$.post(ajax_url, {ajax: true, error: true});
+});
+</script>
+

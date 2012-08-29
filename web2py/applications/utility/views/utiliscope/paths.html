@@ -1,0 +1,99 @@
+{{response.files.append(URL('static','js/underscore.js'))}}
+{{response.files.append(URL('static','js/bootstrap.js'))}}
+{{response.files.append(URL('static','js/date.js'))}}
+{{response.files.append(URL('static', 'js/paths.js'))}}
+{{response.files.append(URL('static','css/bootstrap.css'))}}
+{{response.files.append(URL('static','css/paths.css'))}}
+{{extend 'layout.html'}}
+
+<a href="/"><div class="sublogo" style="position: absolute;">Us</div></a>
+<h1 style="margin-left: 60px; margin-top: 0px;">Worker Paths</h1>
+<br>
+
+<div id="filter-form" class="well form-inline">
+    <input type="text" placeholder="Worker ID" id="worker-id-input"/>
+    <button id="filter-workers-btn" class="btn btn-small btn-success">View Worker</button>
+    <button id="all-workers-btn" class="btn btn-small">All Workers</button>
+</div>
+
+<div id="path-app" class="clearfix">
+</div>
+
+<script type="text/template" id="worker-template">
+    <div class="worker">
+        <div class="worker-info">
+            <b>Worker:</b> <a href="/paths/{{=study_id}}?worker=<%=id%>"><%=id%></a><br/>
+            <% if (hits.length > 0) { %>
+                <b>Hits:</b> <%=hits.length%> (Finished: <%=numFinished%>)
+            <% } else { %>
+                <b>Loading HITs...</b>
+            <% } %>
+        </div>
+        <div class="hits"></div>
+    </div>
+</script>
+<script type="text/template" id="hit-template">
+    <div class="hit">
+        <div class="hit-info">
+            <b>study:</b> <%=study%><br/>
+            <b>hitid:</b> <%=id%><br/>
+            <b>dur:</b> <%=duration / 1000.0%> s<br/>
+            <b>start:</b> <%=startTime.toString(app.timeFormat)%>
+        </div>
+        <div class="chunks"></div>
+        <div class="hit-info">
+            <b>stop:</b> <%=stopTime.toString(app.timeFormat)%>
+        </div>
+    </div>
+</script>
+<script type="text/template" id="chunk-template">
+    <div class="chunk">
+        <% if (separation > 0) { %>
+        <div class="path-separation">
+            <%=separation / 1000.0%> s
+        </div>
+        <% } %>
+        <div class="actions"></div>
+    </div>
+</script>
+<script type="text/template" id="action-template">
+    <div class="action <%=actionClass%>">
+        <%=text%>
+    </div>
+</script>
+<script type="text/template" id="action-details-template">
+    <b>Time:</b> <%=time.toString(app.timeFormat)%><br/>
+    <b>IP:</b> <%=ip%><br/>
+    <b>Other:</b><span class="action-other"><%=other%></span>
+</script>
+<script>
+$(document).ready(function() {
+    var workerIdInput = $('#worker-id-input');
+
+    //Set up worker filter controls
+    $('#filter-workers-btn').click(function() {
+        var worker = workerIdInput.val();
+        if (worker) {
+            window.location = '/paths/' + worker;
+        }
+    });
+    
+    $('#all-workers-btn').click(function() {
+        window.location = '/paths/{{=study_id}}';
+    });
+
+
+{{if worker_id:}}
+    window.app = new PathApp({
+        worker_id: "{{=worker_id}}",
+        study_id: "{{=study_id}}"
+    });
+    workerIdInput.val("{{=worker_id}}");
+{{else:}}
+    window.app = new PathApp({
+        study_id: "{{=study_id}}"
+    });
+{{pass}}
+    window.app.start();
+});
+</script>

@@ -1,0 +1,58 @@
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
+import os, atexit, subprocess
+
+## Set up shortcuts
+def symlink(frum, to):
+    if not (os.path.isfile(to) or os.path.islink(to)):
+        print('Adding symlink %s' % to)
+        os.system('ln -s %s %s' % (frum, to))
+for dir in ['controllers', 'views', 'models', 'static', 'databases']:
+    symlink('web2py/applications/utility/' + dir, dir)
+
+
+os.chdir('web2py')
+
+## Load settings
+try:
+    # This is a trick we use so that we don't load all of
+    # __init__.py... just the settings.  __init__.py will check to see
+    # if this class exists, and if so, it will throw it as an
+    # exception and we'll end up back here again.
+    class LoadSettingsOnly(Exception):
+        pass
+    execfile('applications/utility/models/__init__.py')
+except LoadSettingsOnly:
+    del LoadSettingsOnly
+
+
+## Run the processes
+DEVNULL = open('/dev/null', 'w')
+app = 'utility/utiliscope'
+server    = subprocess.Popen(['python', 'web2py.py', '-a', '<recycle>', '-i',
+                              str(server_url), '-p', str(server_port)#,
+                              #'--minthreads=20', '--maxthreads=200'
+                              ])
+
+scheduler = subprocess.Popen(['python', 'web2py.py', '-K',
+                              '%s,%s,%s' % (app,app,app)],
+                             stdout=DEVNULL,
+                             stderr=DEVNULL)
+
+@atexit.register
+def killem():
+    server.terminate()
+    scheduler.terminate()
+    scheduler.wait()
+    print 'Scheduler dead.  Killing server.  C-c to force kill...'
+    try:
+        server.wait()
+    except KeyboardInterrupt:
+        server.kill()
+        server.wait()
+    print 'Server dead.'
+
+try:
+    server.wait()
+except KeyboardInterrupt:
+    server.terminate()

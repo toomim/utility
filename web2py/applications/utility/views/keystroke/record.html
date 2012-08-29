@@ -1,0 +1,34 @@
+{{response.saveFlash = True}}
+{{extend 'keystroke/klayout.html'}}
+<div style="position: relative" class="row">
+    <div class="span12">
+    {{if messages['recordInstructions'] == 'keystroke':}}
+        <h2 class="big-instructions">You are testing a "biometric" sign-in based on <a target="_blank" href="http://en.wikipedia.org/wiki/Keystroke_dynamics">keystroke dynamics</a>.</h2>
+        <h3 class="big-instructions">Keystroke dynamics</h3>
+        <p>
+            The computer detects the unique pattern that you use to press keys.<br/>
+            Every person has a unique typing pattern that can be used to identify them.
+        </p>
+        
+        <h2 class="big-instructions">Instructions</h2>
+    </div>
+    <div class="span8">
+        <ol>
+        <li>Record your typing pattern {{=requiredRecordings}} times to setup your profile. Try to type normally and accurately.</li>
+        <li>Accept more HITs to try signing in with the pattern you are recording now.</li>
+        </ol>
+        <p><em>Note: The phrase below has been selected for you. You do not need to remember it.</em></p>
+    </div>
+    {{pass}}
+    <div class="span4">
+        <div class="progress-positioner">
+            Recordings completed: <strong>{{=successfulRecordings}} of {{=requiredRecordings}}</strong>
+            <div class="progress">
+                <div class="bar" style="width: {{=100*float(successfulRecordings)/requiredRecordings}}%"></div>
+            </div>
+        </div>
+    </div>
+</div>
+
+{{include 'keystroke/keystroke-form.html'}}
+</div>

@@ -1,0 +1,76 @@
+{{extend 'layout.html'}}
+
+<style>
+box {
+  width: {{=width}};
+  height: {{=height}};
+  top: {{=top}};
+  position: absolute;
+  background-color: #259;
+}
+#box1 {
+  left: {{=left}};
+}
+#box2 {
+}
+box clicked { background-color: #bbb; }
+#instr {
+/* position: relative;
+ top: 400px;*/
+}
+#wrap { width: 100%; height: {{=iframe_height-100}}px; }
+</style>
+
+<div id="instr">
+<h1>Click the blue rectangle {{=request.num_tasks}} times to get {{=request.price_string}}</h1>
+</div>
+<p id="count"></p>
+<div id="wrap" style="position: relative;">
+<div id="box" onclick="moveme()"></div>
+</div>
+
+
+<script>
+var ajax_url = "{{=URL(r=request, f='hit', args=request.args, vars=request.vars)}}";
+
+function check_redirect(data) {
+	if (data.redirect) {
+      window.location.href = data.redirect;
+   }
+}
+
+var last_click = new Date();
+var last_ajax_reply = new Date()
+var last_ajax_delay = 0;
+
+function moveme () {
+	$('#box').addClass('clicked');
+	last_click = new Date();
+	$.post(ajax_url,
+		{ajax: true,
+		 click_time: new Date() - last_ajax_reply,
+		 ajax_load_time: last_ajax_delay},
+		function(data) {
+			check_redirect(data);
+			$('#box')[0].style.left = data.left;
+			$('#box')[0].style.top = data.top;
+			$('#box')[0].style.width = data.width;
+			$('#box')[0].style.height = data.height;
+			$('#box').removeClass('clicked');
+			$('#count')[0].innerHTML = data.count + ' left';
+
+			last_ajax_reply = new Date();
+			last_ajax_delay = last_ajax_reply - last_click;
+		},
+	   'json');
+}
+$('#wrap')[0].ondblclick = function (event) { 
+	if (!event) event = window.event;
+   if (event.preventDefault) 
+      event.preventDefault();
+   else 
+      event.returnValue = false;
+   return false;
+};
+</script>
+

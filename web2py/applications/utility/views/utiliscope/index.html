@@ -1,0 +1,61 @@
+{{checkpoint('index rendering template')}}
+{{extend 'utiliscope/layout.html'}}
+
+<style>body { padding: 90px; }</style>
+
+<a href="/hello" style="color: #ffffff;">
+	<div style="position: absolute; top: 0; left: 0; height: 30px; padding: 10px 141px; font-family: droid sans, calibri; font-weight: bold; background-color: #FF69C6; width: 100%; font-size: 25px; font-color: #ffffff;">
+	HELLO!  Want an introduction?  Click me!
+	</div>
+</a>
+<br><br>
+<h1 class="logo">UTILIscope</h1>
+
+{{ def studies_table(published=None): }}
+
+<table class="results" width="545px" cellspacing="0" border="0">
+<tr>
+  <th style="width: 100px; border-width: 0 1px 1px 0">study</th>
+  <th style="border-width: 0 1px 1px 0">hits</th>
+  <th style="border-width: 0 1px 1px 0">1¢ rate</th>
+  <th style="border-width: 0 0 1px 0">money metric</th>
+</tr>
+{{
+q = db.studies.publish==published if published != None else db.studies.id>0
+for study in db(q).select(db.studies.ALL, orderby=db.studies.id): }}
+<tr>
+  <td style="border-width: 0 1px 0 0">{{= A(study.name, _href=url(f='view', args=[study.id]), _style='color: /*#FF7CCB*/#c7c7c7;') }}</td>
+  <td style="text-align: right; border-width: 0 1px 0 0">
+    {{= pretty_int(db((db.hits.study == study) & (db.hits.status == 'closed')).count()) }}
+  </td>
+  <td style="text-align: right; border-width: 0 1px 0 0">{{= cent_workrate(study) }}</td>
+  <td>{{= study_result(study, 'money_metric') }}</td>
+</tr>
+{{ pass }}
+<tr>
+  <td style="border-width: 0 1px 0 0">&nbsp;</td>
+  <td style="text-align: right; border-width: 0 1px 0 0">
+  &nbsp;</td>
+  <td style="border-width: 0 1px 0 0">&nbsp;</td>
+	<td>&nbsp;</td>
+<tr>
+</table>
+
+{{ return }}
+
+{{ studies_table() }}
+
+<br><br><br><br>
+<h2>hits</h2>
+<ul>
+<li><a href="/utility/appadmin/select/db?query=db.hits.id%3E0">admin page</a></li>
+</ul>
+
+
+<h2>actions</h2>
+<ul>
+<li><a href="/utility/appadmin/select/db?query=db.actions.id%3E0">admin page</a></li>
+<li><a href="/utility/appadmin/select/db?orderby=actions.time">View actions</a></li>
+</ul>
+{{checkpoint('Finished drawing index')}}
+{{checkpoint('Total index time:', True)}}

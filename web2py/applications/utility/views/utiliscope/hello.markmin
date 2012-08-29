@@ -1,0 +1,314 @@
+
+Soon you'll be making things like [[this example captcha HIT /test/captcha]].
+
+## The basics
+
+How about we make our first hit?
+Make a new file in controllers/myhit.py:
+
+ ``def index(): return 'hi there!'``:python
+
+Now you have a basic HIT that does nothing!  You can test it at:
+- [[/myhit /myhit]] (the raw deal)
+- or [[/test/myhit /test/myhit]] (for a fancy view!)
+
+This second version emulates Mechanical Turk for you.
+
+(You can also use /**myhit**/**index** or /test/**myhit**/**index**.
+This is the ''index'' function in the ''myhit'' controller.  ''index''
+happens to be the default if you don't specify a function.)
+
+## Getting mechanical turk variables
+
+We give you access to mturk variables:
+- ``request.hitid``
+- ``request.assid`` (the assignment id)
+- ``request.workerid``
+
+For example, try this:
+
+ ``def index(): return request.hitid``:python
+
+...And try it in the [[/test/myhit /test/myhit]] test environment.
+(It will be ``None`` without the test environment, at [[/myhit /myhit]].)
+
+## Let's flesh this out into something real.
+
+Most hits have a model, view, and controller.  Make these files:
+- controllers/**myhit**.py (you made this already)
+- views/**myhit**/**index**.html
+- models/**myhit**.py
+
+We're going to make a hit that asks the worker for their name, and
+saves it into the database and pays them.
+
+Put this into controllers/**myhit**.py:
+ ``def index():
+    return {'current_workerid' : request.workerid}
+
+def finish():
+    db.myhit.insert(name=request.vars.worker_name)
+    hit_finished()
+``:python
+
+And this in views/**myhit**/**index**.html:
+ ``{{ extend 'layout.html' }}
+<h2>Hi Worker {{=current_workerid}}! What's your name?</h2><br>
+<form action="/myhit/finish" method="POST">
+   <input type="text" name="worker_name" />
+   <input type="submit" />
+</form>
+``:html
+
+And this in models/**myhit**.py:
+ ``options.myhit = {'price' : [.01, .02, .03]}
+db.define_table('myhit',                   # Make a database table for this hit
+                db.Field('name', 'text'))  # it will store worker names
+``:python
+
+Now go to [[/test/myhit /test/myhit]].  Click the button.  Here's what
+happens:
+- The ``index`` controller creates a variable ``current_workerid``.
+- Web2py knows to find the html view in views/**myhit**/**index**.  It makes a form and puts the value of ``current_workerid`` in there.
+- When you click submit, it posts to the form's ``action="/myhit/finish"``
+- This loads the finish() function in myhit.py, which inserts the name you typed into the 'myhit' database table
+- The 'myhit' database table is defined in models/myhit.py, along with some options.
+
+Also notice that now when you load [[/test/myhit /test/myhit]], you
+have an option at the top to set the price to one of the prices we
+defined in models/myhit.py.  When we go live, the framework will
+randomly sample one of these values for each worker.
+
+## Poking around
+
+Now open a new terminal and run ``./shell``.  Check out your results
+by running ``print db.myhit.all()``.  You can run any python command
+in here, with full access to your code.  (Be sure to install IPython,
+it makes your shell way better. Use ``sudo apt-get install ipython``
+on Debian/Ubuntu.)
+
+When debugging your code, make print statements with the ``debug`` command.  Like this:
+ ``define index():
+    debug('Inside this hit, request.hitid is set to %s', request.hitid)
+    return {}
+``
+You can view the results at [[/dash /dash]].  It will auto-update.
+
+When you write data analysis code, put it into models/myhit.py.  You
+can write a function like ``def analyze_myhit_data()``:python in
+there.  Then reload a ./shell and it will be ready for you to run.  If
+you already have a shell, you can just refresh the code with
+``execfile('applications/utility/models/myhit.py')``.
+
+## Post to sandbox
+
+Push the "launch hit on sandbox" button at [[/test/myhit /test/myhit]].
+But this won't work until you set up with a real database (see below).
+
+## What's next
++ Edit models/settings.py
++ You really ought to get set up with a real database.  Postgres or mysql.
++ And it's way easier to do this on linux.  Just install a linux VM.  See below.
+ 
+
+## Summary Reference
+
+You get the following places to put stuff for your hits:
+- controllers/hitname.py
+- models/hitname.py
+- views/hitname/*.html
+- static/hitname/*
+
+Put helper functions in models/hitname.py.  They will be defined
+globally for all controllers and views.
+
+Your code has access to these mturk variables:
+- ``request.hitid``
+- ``request.assid`` (the assignment id)
+- ``request.workerid``
+
+And these helper variables:
+- ``request.price`` (the amount you're paying for this hit)
+- ``request.price_string`` (as a string)
+- ``request.testing`` (is this being run from /test?)
+- ``request.live`` (is the hit live on mturk?)
+- ``request.preview`` (is this just a preview, before the worker accepts?)
+- ``request.sandbox`` (are you using the mturk sandbox)
+
+Test your code at /test/hitname.
+
+Debug your code with ``debug()``, and then view it at [[/dash /dash]].
+
+The database has an ``actions`` table to store things turkers do like:
+- ``preview``ing a hit
+- ``accept``ing hit
+- ``display`` a hit page
+- ``finish`` a hit
+
+You can insert your own actions with ``record_action(name,
+other=None)``.  The optional ``other`` parameter lets you save
+arbitrary json.  You can throw a string, array, or dictionary in here
+and it will json-encode it for you.
+
+Get a fancy visualization of all worker actions at [[/paths /paths]]!
+Michael Brooks wrote this.
+
+Call ``hit_finished()`` when the worker has completed your hit.  This
+will mark it done, and pay them the amount in ``request.price``.
+
+The database tables for hits, workers, assignments, and actions are
+all defined in models/__init__.py.  Take a look.
+
+My email is [[toomim@cs.washington.edu mailto:toomim@cs.washington.edu]].  Please keep in touch!  I need to
+learn from your experience.
+
+Need some inspiration for turk tasks?  [[Try this http://youtu.be/R8RIqJLUYSE]]
+
+## Launching a real study
+
+When you're ready, use: ``launch_study(num_hits, task, name,
+description)``.  ``task`` is the name of your controller
+(e.g. ``myhit``), or you can refer to a specific function in the
+controller (e.g. ``myhit/go_boy``) if you want to use a function other
+than ``index()``.
+
+# Getting Serious
+
+You won't need this until you're running a live study.  Then you want
+to set up a nice linux server with a nice database.
+
+If you want to skip all this, just ask me to set you up with an
+account on my server!
+
+## Use a real database
+
+The default database is sqlite.  This is great for testing, but it
+isn't multithreaded, which means your web app won't allow multiple
+people to load pages at the same time, and we can't run tasks in the
+background.  We need these background tasks to launch hits, pay
+workers who've completed hits, and refresh the database from amazon
+servers.
+
+You should eventually switch to a real database.  We use postgres.
+This is easy on linux:
+
+`` $ sudo apt-get install postgresql
+ $ sudo apt-get install python-psycopg2
+ $ sudo su postgres
+ $ createuser toomim
+ Shall the new role be a superuser? (y/n) n
+ Shall the new role be allowed to create databases? (y/n) y
+ Shall the new role be allowed to create more new roles? (y/n) y
+ $ createdb -O toomim utility
+ $ createdb -O toomim utility_sandbox
+ $ exit
+ $ psql utility
+ utility=> alter user toomim password 'cranberrypudding';
+ utility=> \q
+``
+
+Now edit settings.py and turn sqlite = False, and set the username
+and password in database_url.
+
+Now open ./shell and run create_indices_on_postgres().  This is
+necessary to make things faster!
+
+To backup or load a postgres database, check out the scripts in the
+backups/ directory.
+
+## Using linux on your laptop
+
+I recommend you do development on linux:
+- Installing things like postgres is much easier
+- I only test the code on Linux (even though web2py is cross-platform)
+
+People are skeptical about this.  Don't be a skeptic.
+
+I have a pretty sweet setup.  I have ubuntu running on a VM on my
+laptop.  But I edit code with my Mac text editor, use my Mac web
+browser to test it, and use my Mac terminal to run things.  Here's how:
+
++ Download VirtualBox and install Ubuntu on it
++ Give the VM a "host-only adapter" in the virtualbox settings.  It will probably get the ip address 192.168.56.101.
++ Ssh into that address from your actual computer.  This is your terminal.
++ Set a network filesystem on the VM, either using virtualbox/vmware's folder sharing or using sshfs.  Mount the folder in osx/windows, and open the files using your normal text editor.
++ Set server_url to '192.168.56.101' in models/settings.py
+
+Here's the command I use with sshfs:
+
+``  mkdir /Volumes/Ubuntu
+  sshfs toomim@ubuntu /Volumes/Ubuntu -oauto_cache,reconnect,defer_permissions,idmap=user,volname=Ubuntu
+``:python
+
+If you ever need to renew an ip address on linux, run 'sudo dhclient'.
+
+I also find that this is a good option to have, otherwise when my
+laptop switches to a new wireless network, the virtualbox loses dns
+access until I reset networking:
+``   VBoxManage setextradata "Ubuntu" "VBoxInternal/Devices/pcnet/0/LUN#0/Config/DNSProxy" 1
+``
+
+## Setting up mail alerts
+
+You don't need to do this unless you're setting up a live server (the
+server you run host real turk jobs from).
+
+Your host needs a public IP, DNS needs to be set up for it, including
+MX records.
+
+`` $ sudo apt-get install exim4-base exim4-daemon-light
+ $ sudo dpkg-reconfigure exim4-config
+``
+
+Choose options:
+ - internet site, send & receive email
+ - and give it the right hostname
+
+Now /usr/sbin/sendmail should work, and it should be able to send mail.
+
+## Upgrading this code
+
+Just take the new updated ``utility.zip`` file and unzip it over the
+whole code again.  It will only overwrite the utility files.  Your
+code is safe.
+
+## Custom HITS and studies
+
+If you want to pass different variables through each hit, or launch
+them with special timings, you'll need to schedule hits individually
+with ``schedule_hit(launch_date, study, task, othervars)``.  For
+instance, you can use ``schedule_hit(datetime.now(), some_study.id,
+'captcha', {'foo':3})`` to launch a captcha hit right now, and when
+it's loaded, the additional variable ``request.foo`` will be set to
+``3`` for you.  You'll also need to define a study.  You might use:
+
+``
+some_study = db.studies.insert(name='captcha study 42',
+                               description='midnight captcha mania experiment',
+                               launch_date=datetime.now(),
+                               controller_func='captcha')
+``
+
+## Poking into the databases
+
+The raw sqlite database is in
+``web2py/applications/utility/databases``, you can get into it with
+``sqlite3 utility_sandbox.db`` or ``utility.db``.  Yes, we keep the
+sandbox and real databases separate for your safety.  If you've
+switched to postgres, use ``psql utility_sandbox`` or ``psql
+utility``.
+
+## Resetting a database
+
+First do:
+``  ./shell
+  db_hash()
+``:python
+
+Remember what this hash looks like.  You'll use it below.
+``  dropdb utility_sandbox
+  createdb utility_sandbox -O toomim
+  rm web2py/applications/utility/databases/<hash>*
+``:python
+
+## Fin

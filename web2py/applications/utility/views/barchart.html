@@ -1,0 +1,50 @@
+{{ def barchart(data, i):
+}}
+<script type="text/javascript">
+var chart{{= i }};
+$(document).ready(function() {
+   chart = new Highcharts.Chart({
+      chart: {
+         renderTo: 'container{{= i }}'
+      },
+      title: {
+         text: ''
+      },
+      xAxis: {
+         /*categories: ['Apples', 'Oranges', 'Pears', 'Bananas', 'Plums']*/
+					title: {
+						text: 'x title', enabled: false
+					}
+      },
+		credits: { enabled: false },
+		tooltip: {
+			formatter: function() {
+				var work = this.y.toFixed(1);
+	         return '' + work + ' hits completed per worker';
+			}
+		},
+		legend: { enabled: false },
+      series: [{
+         type: 'column',
+         name: 'Jane',
+         data: {{= "%s" % data }}
+      }/*, {
+         type: 'column',
+         name: 'John',
+         data: [2, 3, 5, 7, 6]
+      }, {
+         type: 'column',
+         name: 'Joe',
+         data: [4, 3, 3, 9, 0]
+      }*/, {
+         type: 'spline',
+         name: 'spline',
+         data: {{= "%s" % data }}
+      }]
+   });
+   
+   
+});
+</script>
+<div id="container{{=i}}" style="display: inline; width: 400px; height: 400px; margin: 0"></div>
+{{ return }}

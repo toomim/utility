@@ -1,0 +1,10 @@
+{{response.saveFlash = True}}
+{{extend 'keystroke/klayout.html'}}
+<div class="row">
+    <div class="span12">
+    {{if messages['verifyInstructions'] == 'keystroke':}}
+        <h2 class="big-instructions">Verify your identity from your typing pattern</h2>
+    {{pass}}
+    </div>
+    {{include 'keystroke/keystroke-form.html'}}
+</div>

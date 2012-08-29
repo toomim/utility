@@ -1,0 +1,64 @@
+{{extend 'layout.html'}}
+<style>
+/*body { padding: 5px; margin: 0; }*/
+</style>
+
+<script src="/static/js/jquery.queryobject.js"></script>
+
+<div style="background-color: #ddd; padding: 10px; font-size: 12px; margin-bottom: 20px;" class="clearfix">
+
+{{for k,v in conditions.items():}}
+  {{=k}}
+
+  {{ if is_singleton(v): }}
+    <span style="padding: 2px; background-color: #eee; border: 1px dotted #aaa;">{{=singleton(v)}}</span>
+  {{else:}}
+    <select name="{{=k}}">
+      {{for option in v:}}
+      <option>{{=str(option)}}</option>
+      {{pass}}
+    </select>
+  {{pass}}
+{{pass}}
+
+<button style="margin-left: 50px;">
+   Throw a hit onto {{='turk SANDBOX' if sandboxp else 'LIVE turk'}}!
+</button>
+
+<div style="float: right; width: 220px;">
+	<a href="{{=toggle_preview_url}}">[{{='X' if as_preview else ' '}}] Toggle preview
+	<a href="{{=url}}">[X] Remove frame</a>
+</div>
+
+</div>
+<img src="/static/utiliscope/mturkheader{{='' if as_preview else '_accepted'}}.png">
+
+<iframe style="border: 1px solid #000; margin: 10px;" width="100%" height="{{=iframe_height}}" src="{{=url}}"></iframe>
+
+
+<script>
+function reload_iframe() {
+	var params = {}
+	$('select').each(function () {
+		console.log(this);
+		params[this.name] = this.value; });
+	var url = "{{=XML(url)}}" + '&' + $.param(params);
+	console.log('Going to new url ' + url);
+	$('iframe').attr('src',url);
+}
+$('select').change(reload_iframe);
+
+$('button').click(function () {
+	if (confirm('Sure? This will launch a {{=request.task}} hit onto the '
+				+ "{{='SANDBOX' if sandboxp else 'REAL LIVE'}}"
+				+ ' mturk.'))
+		$.ajax({
+			type: "POST",
+			url: "/utiliscope/launch_one_off_hit",
+			data: {task: '{{=request.task}}', sandbox: {{=sj.dumps(sandboxp)}} },
+			success: function () {
+				alert("Now you've done it! You launched a hit!");
+			}
+		});
+});
+</script>

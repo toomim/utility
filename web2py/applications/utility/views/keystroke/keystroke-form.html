@@ -1,0 +1,121 @@
+<div class="auth-box span8">
+    <div class="error-box hide">
+    {{if form.errors:}}
+        {{uniqueErrors = list(set(form.errors.values()))}}
+        {{for error in uniqueErrors:}}
+            <div class="alert alert-error">{{=error}}</div>
+        {{pass}}
+        {{form.errors.clear()}}
+    {{pass}}
+    
+    {{if response.saveFlash:}}
+          {{alertClass="flash alert alert-block "}}
+          
+          {{if not response.flash:}}
+            {{alertClass += "hide "}}
+          {{pass}}
+          
+          {{if response.flashType:}}
+            {{alertClass += "alert-" + response.flashType}}
+          {{pass}}
+          
+          <div class="{{=alertClass}}">{{=response.flash or ''}}</div>
+    {{pass}}
+    </div>
+    
+    {{=form}}
+</div>
+<script type="text/javascript">
+    
+    $(document).ready(function() {
+        var authField = $("#auth-field");
+        var submitButton = $("#auth-submit");
+        var authForm = $("#auth-form");
+        var typing = Array();
+        var startTime = undefined;
+        var loadingBlock = $(".loading", authForm);
+        var isLoading = false;
+        
+        //make the loading block transparent
+        loadingBlock.css('opacity', 0.9).hide();
+        
+        var forceSubmit = false;
+        
+        function loading(loading) {
+            isLoading = loading;
+            if (loading) {
+                $(document.activeElement).blur();
+                loadingBlock.fadeIn(function() {
+                    forceSubmit = true;
+                    authForm.submit();
+                });
+            } else {
+                loadingBlock.fadeOut();
+            }
+        }
+        
+        $('.error-box').fadeIn();
+        function fadeErrors() {
+            $('.error-box').animate({
+                opacity: 0
+            });
+        }
+        
+        authForm.submit(function(event) {
+            if (forceSubmit) {
+                return true;
+            }
+            
+            if (!isLoading && authField.val()) {
+                $('#typing-input').val(JSON.stringify(typing));
+                loading(true);
+                fadeErrors();
+                return false;
+            } else {
+                validation_error('You must type the phrase.');
+                authField.focus();
+                return false;
+            }
+        });
+        
+        
+        authField.keydown(function(event) {
+            if (isLoading)
+                return false;
+        
+            if (event.which == 13) { //enter
+                submitButton.focus();
+                authForm.submit();
+                return false;
+            }
+        
+            if (!startTime)
+                startTime = new Date();
+
+            typing.push({
+                time: new Date() - startTime,
+                which: event.which,
+                type: 'down',
+                position: authField.val().length
+            });
+        }).keyup(function(event) {
+            if (!startTime)
+                startTime = new Date();
+
+            typing.push({
+                time: new Date() - startTime,
+                which: event.which,
+                type: 'up',
+                position: authField.val().length
+            });
+        }).bind('paste', function(event) {
+            return false;
+        }).bind('drop', function(event) {
+            return false;
+        });
+        
+        authField.focus();
+        var container = $(document);
+        container.scrollTop(container.height());
+    });
+</script>

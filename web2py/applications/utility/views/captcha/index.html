@@ -1,0 +1,39 @@
+{{extend 'captcha/layout.html'}}
+
+<div style="padding: 15px 20px 0 20px;">
+
+{{ if request.style == 'ugly': }}
+<style>
+body { background-color: #00ff00;
+color: #0000ff;
+font-size: 9px;
+ }
+</style>
+{{ pass }}
+
+<h1 style="padding-bottom: 10px;">Answer {{=total}} captchas, earn {{=pay}}</h1>
+
+<p style="margin-bottom: 20px;">You will be paid in a {{=pay}} bonus after finishing all {{=total}}.</p>
+{{ if request.style == 'pretty': }}
+<div style="position: absolute; left: 370px; width: 250px">{{ midflash() }}</div>
+{{ pass }}
+
+{{ if request.style == 'ugly': }}
+<img style="position: absolute; top: 0; left: 450px;" src="{{=URL(r=request, c='static', f='captcha/ads05.gif')}}">
+{{ pass }}
+
+{{=XML(form)}}
+</div>
+
+
+<script>
+$(window).load(function () {
+	var box = $('#recaptcha_response_field').get(0);
+{{ if is_preview(): }}
+   box.disabled = true;
+	box.value = '';
+{{ else: }}
+	box.focus();
+{{ pass }}
+});
+</script>

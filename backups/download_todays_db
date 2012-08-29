@@ -1,0 +1,1 @@
+scp yuno.us:projects/utility/backups/utility_`date +%Y-%m-%d` .

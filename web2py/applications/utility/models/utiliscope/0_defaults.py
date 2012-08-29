@@ -1,0 +1,13 @@
+# sqlitep = True
+# sandboxp = True
+# sandbox_serves_from_localhost_p = True
+# migratep = True
+# fake_migratep = False
+# email_address = 'your@address.com'  # errors will be emailed to you here
+# database_login_pass = ('login', 'pass')
+# database_name = 'utility'
+# server_url = 'localhost'
+# server_port = 8000
+# ip_pricing = True
+# aws_access_key_id = 'fillthisin'
+# aws_secret_access_key = 'andthistoo'

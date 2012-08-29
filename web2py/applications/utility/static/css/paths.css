@@ -1,0 +1,134 @@
+body {
+    background-color: black;
+}
+#path-app {
+    clear: both;
+    color: black;
+    font-size: 0.7em;
+    line-height: 1em;
+    white-space: nowrap;
+}
+
+.worker {
+    display: inline-block;
+    margin: 4px;
+    padding: 10px;
+    background-color: #222;
+}
+.worker-info {
+    background-color: #FFF4D7;
+    
+    margin: 5px;
+    padding: 6px;
+    
+    -webkit-border-radius: 3px;
+    -moz-border-radius: 3px;
+    border-radius: 3px;
+}
+.worker .hits {
+    position: relative;
+}
+
+.hit {
+    -webkit-border-radius: 3px;
+    -moz-border-radius: 3px;
+    border-radius: 3px;
+
+    width: 240px;
+    position: absolute;
+    
+    margin: 5px;
+    padding: 6px;
+    
+    background-color: white;
+}
+
+.hit-info {
+    margin: 0 0 6px 0;
+    
+    padding: 5px;
+    
+    white-space: nowrap;
+    overflow: hidden;
+	text-overflow: ellipsis;
+}
+
+.chunk {
+    position: relative;
+}
+.chunk .path-separation {
+    font-size: 0.8em;
+    height: 40px;
+    line-height: 40px;
+    border-left: 3px solid darkRed;
+    margin-left: 50%;
+    padding-left: 5px;
+}
+
+.action {
+    text-align: center;
+    
+    white-space: nowrap;
+    overflow: hidden;
+	text-overflow: ellipsis;
+    
+    height: 18px;
+    line-height: 18px;
+    
+    border: 1px solid #aaa;
+    
+    background-color: #A8AFFD;
+    
+    margin-top: 2px;
+}
+.action:first-child {
+    margin-top: 0;
+}
+.action.invalid {
+    background-color: #E78585;
+}
+.action.display {
+    background-color: #ddd;
+}
+.action.accept, .action.finished , .action.initialized, .action.unblocked, .action.blocked {
+    background-color: #91E785;
+}
+.action.routing {
+    background-color: #F1C676;
+}
+
+.action-other {
+    font-family: Menlo, Monaco, Consolas, "Courier New", monospace;
+    max-height: 250px;
+    display: block;
+    overflow: auto;
+}
+
+.popoverable {
+    cursor: pointer;
+    -webkit-border-radius: 3px;
+    -moz-border-radius: 3px;
+    border-radius: 3px;
+}
+.popoverable:hover {
+    -webkit-box-shadow: 0px 0px 3px rgba(0, 0, 0, 0.55);
+    -moz-box-shadow:    0px 0px 3px rgba(0, 0, 0, 0.55);
+    box-shadow:         0px 0px 3px rgba(0, 0, 0, 0.55);
+}
+
+.popover.right .arrow {
+    border-right-color: #888;
+}
+.popover-inner {
+    background-color: #888;
+}
+.popover-title {
+    font-size: 14px;
+}
+.popover-content p {
+    font-size: 12px;
+}
+
+#filter-form {
+    float: left;
+}

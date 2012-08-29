@@ -1,0 +1,108 @@
+{{extend 'layout.html'}}
+
+<script type="text/javascript" src="/init/static/jquery/jquery.timers.js"></script>
+<style>
+#box {
+  width: {{=width}}px;
+  height: {{=height}}px;
+  left: {{=left}}px;
+  top: {{=top}}px;
+  position: absolute;
+  background-color: #259;
+  cursor: pointer;
+}
+#box.clicked { background-color: #bbb; }
+#boxprogress {
+  width: 100%;
+  height: 0;
+  position: absolute;
+  bottom: 0px;
+  background-color: #22aa22;
+}
+#instr {
+/* position: relative;
+ top: 400px;*/
+}
+#wrap { width: 100%; height: {{=iframe_height-150}}px; }
+.c1 {color: #185360;}
+.c2 {color: #585858;}
+#resizemsg {
+	display: none;
+	position: absolute;
+	width: 100%; height: {{=iframe_height}}px;
+	background-color: #259;
+	color: #fff;
+	z-index: 234;
+	padding: 90px;
+}
+#submitmsg {
+	display: none;
+	position: absolute;
+	width: 100%; height: {{=iframe_height}}px;
+	background-color: #fff;
+	color: #000;
+	z-index: 234;
+	padding: 90px;
+}
+#newgame {
+	display: none;
+	position: absolute;
+	width: 100%; height: {{=iframe_height}}px;
+	background-color: #fff;
+	color: #000;
+	z-index: 234;
+	padding: 90px;
+}
+.newgame_button {
+	background-color: #227722;
+	color: #fff;
+	padding: 40px;
+	padding-left: 100px;
+	margin: 50px;
+	font-size: 30px;
+	width: 400px;
+	border: solid 1px #004400;
+	border-width: 0 3px 3px 0;
+	text-decoration: underline;
+   cursor: pointer;
+}
+#score {	position: absolute; top: 100px; font-size: 150px;}
+#youscore {	position: absolute; left: 200px; color: #8b8;}
+#compscore { position: absolute; left: 600px; color: #b88;}
+h2 {letter-spacing: normal;}
+</style>
+
+<div id="resizemsg"><h1>Make your browser window wider.</h1><h1>It must be at least {{=iframe_width}} pixels</h1><br><br><br><br><br></div>
+
+<div id="submitmsg"><h1><span style="color: #050">Yeah you are done!  Submitting...</span></h1><p>Your bonus will be visible in your "transaction history" soon.</p><br><br>
+<h1 id="success" style="display: none;"><span style="color: #050">Success!</span></h1><br><br><br></div>
+
+{{foo = ' <span style="font-size: 20px;" class="c2">(Note: this batch is free)</span>' if request.price == 0.0 else '' }}
+
+<div id="newgame">
+<div id="instr">
+<h2><span class="c2">Task:</span> Play a clicking game
+    &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+    <span class="c2">Pay:</span> {{=request.price_string}} per minute {{=XML(foo)}}</h2>
+<p>You will be paid a {{=request.price_string}} bonus for each minute you play the game.  You will be paid whether you win or lose.</p>
+
+<p>The game's goal is to turn the blue rectangle green before the
+clock runs out.  Each click turns it more green.</p>
+
+
+</div>
+
+	<p></p>
+	<div class="newgame_button" onclick="newgame()">Click here to start the game!</div>
+</div>
+
+<p id="score"><span id="compscore"></span><span id="youscore"></span></p><div id="timer">hello</div>
+<div id="wrap" style="position: relative;">
+<div id="box" onmousedown="clicky()"><div id="boxprogress"></div></div>
+</div>
+
+
+<script>
+{{ include 'fittsfun.js' }}
+</script>
+

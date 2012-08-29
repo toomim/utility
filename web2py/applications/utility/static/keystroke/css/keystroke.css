@@ -1,0 +1,153 @@
+#auth-form {
+    position: relative;
+}
+
+.auth-box {
+    margin-top: 20px;
+}
+
+#auth-form .loading {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    background-color: white;
+    top:-1px;
+    left: -1px;
+    border-radius: 4px;
+    border: 1px solid #ccc;
+    
+    line-height: 120px;
+    text-align: center;
+    font-size: 1.2em;
+}
+
+#auth-field {
+    font-family: Menlo, Monaco, Consolas, "Courier New", monospace;
+    font-size: 16px;
+    width: 480px;
+}
+
+#auth-example {
+    font-family: Menlo, Monaco, Consolas, "Courier New", monospace;
+    font-size: 16px;
+    margin-left: 6px;
+    margin-top: 20px;
+    margin-bottom: 5px;
+}
+
+#auth-form .auth-instructions {
+    margin-bottom: 10px;
+}
+
+.item {
+    margin-bottom: 20px;
+    width: 100%;
+}
+
+.question {
+}
+
+.answers {
+    margin-top: 10px;
+    margin-left: 50px;
+}
+
+.img-loading {
+    position: relative;
+    padding: 3px;
+    
+    margin-left: 50px;
+    margin-top: 10px;
+    
+    border: 1px solid #ccc;
+    background-color: #fff;
+    
+    width: 250px;
+    min-height: 100px;
+}
+
+.img-loading img {
+    width: 250px;
+}
+
+.progress-positioner {
+    margin-top: 20px;
+    /* margin-left: auto;
+    margin-right: auto; */
+    width: 250px;
+    text-align: center;
+    line-height: 24px;
+    font-size: 18px;
+}
+.progress-positioner .progress {
+    margin-bottom: 0
+}
+
+#auth-form .btn-primary {
+    margin-left: 10px;
+}
+
+.footer .page-header {
+    margin-top: 0px;
+    padding: 0px;
+}
+
+#price-display {
+    float: right;
+    padding: 10px;
+    margin-top: -5px;
+    border-radius: 5px; 
+    -moz-border-radius: 5px; 
+    -webkit-border-radius: 5px;
+    background-color: #C0F3C4;
+}
+#price-display h2 {
+    line-height: 1em;
+    text-align: right
+}
+
+.preview-banner {
+    font-size: 1.5em;
+    font-weight: bold;
+    
+}
+
+.reminder-text {
+    margin-left: 20px;
+    vertical-align: middle;
+}
+
+.big-instructions {
+    margin-top: 25px;
+}
+
+.btn-warning {
+  background-color: #ec7a1d;
+  background-image: -moz-linear-gradient(top, #fa892d, #d66305);
+  background-image: -ms-linear-gradient(top, #fa892d, #d66305);
+  background-image: -webkit-gradient(linear, 0 0, 0 100%, from(#fa892d), to(#d66305));
+  background-image: -webkit-linear-gradient(top, #fa892d, #d66305);
+  background-image: -o-linear-gradient(top, #fa892d, #d66305);
+  background-image: linear-gradient(top, #fa892d, #d66305);
+  background-repeat: repeat-x;
+  filter: progid:DXImageTransform.Microsoft.gradient(startColorstr='#fa892d', endColorstr='#d66305', GradientType=0);
+  border-color: #d66305 #d66305 #8b4003;
+  border-color: rgba(0, 0, 0, 0.1) rgba(0, 0, 0, 0.1) rgba(0, 0, 0, 0.25);
+  *background-color: #d66305;
+  /* Darken IE7 buttons by default so they stand out more given they won't have borders */
+
+  filter: progid:DXImageTransform.Microsoft.gradient(enabled = false);
+}
+.btn-warning:hover,
+.btn-warning:active,
+.btn-warning.active,
+.btn-warning.disabled,
+.btn-warning[disabled] {
+  background-color: #d66305;
+  *background-color: #bd5704;
+}
+.btn-warning:active,
+.btn-warning.active {
+  background-color: #a44c04 \9;
+}
+

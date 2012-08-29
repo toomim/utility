@@ -1,0 +1,1 @@
+pg_dump -Fc utility > utility_`date +'%Y-%m-%d'`
