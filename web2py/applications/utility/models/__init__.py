@@ -683,8 +683,8 @@ def load_live_hit():
     request.study = db.studies[hit.study]
     if hit.othervars and sj.loads(hit.othervars):
         othervars = sj.loads(hit.othervars)
-        for k,v in othervars.items():
-            request[k] = v
+        request.update(othervars)
+        request.vars.update(othervars)
     request.task = hit.controller_func
     # Set up the task options, now that we know the task:
     make_request_vars_convenient() 
