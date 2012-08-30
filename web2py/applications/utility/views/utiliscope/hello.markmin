@@ -173,6 +173,11 @@ description)``.  ``task`` is the name of your controller
 controller (e.g. ``myhit/go_boy``) if you want to use a function other
 than ``index()``.
 
+To move off the sandbox, change ``sandboxp = False`` in settings.py.
+Now restart your ``./shell`` (or reload your /test page) and launch the study.
+Notice that your database is now fresh and clean.  The framework keeps your
+sandbox and live MTurk databases completely separate!
+
 # Getting Serious
 
 You won't need this until you're running a live study.  Then you want
