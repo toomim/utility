@@ -1,6 +1,5 @@
 
 
-
 # def log_action(action,
 #                hit = request.vars.hitId,
 #                worker = request.vars.workerId,
@@ -254,7 +253,14 @@ def store_get(key):
     r = db(db.store.key==key).select().first()
     return r and sj.loads(r.value)
 def store_set(key, value):
-    return db.store.update_or_insert(key=key, value=sj.dumps(value))
+    # update_or_insert doesn't work in old web2pys... cause of a bug...
+    #return db.store.update_or_insert(key=key, value=sj.dumps(value))
+    # So I wrote my own:
+    value = sj.dumps(value)
+    record = db.store(db.store.key==key)
+    return record.update_record(value=value) \
+        if record else db.store.insert(key=key, value=value)
+
 def last_scheduler_errors(N=10):
     errors = db(db.scheduler_run.status=='FAILED').select(limitby=(0,N),
                                                           orderby=~db.scheduler_run.id)
