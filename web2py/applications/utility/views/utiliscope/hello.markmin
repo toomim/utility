@@ -1,4 +1,3 @@
-
 Soon you'll be making things like [[this example captcha HIT /test/captcha]].
 
 ## The basics
@@ -100,6 +99,8 @@ there.  Then reload a ./shell and it will be ready for you to run.  If
 you already have a shell, you can just refresh the code with
 ``execfile('applications/utility/models/myhit.py')``.
 
+If you ever see the error ``"current transaction is aborted, commands ignored until end of transaction block"`` it means you must run ``db.rollback()``.
+
 ## Post to sandbox
 
 Push the "launch hit on sandbox" button at [[/test/myhit /test/myhit]].
@@ -154,7 +155,7 @@ Get a fancy visualization of all worker actions at [[/paths /paths]]!
 Michael Brooks wrote this.
 
 Call ``hit_finished()`` when the worker has completed your hit.  This
-will mark it done, and pay them the amount in ``request.price``.
+will mark it done, and pay them the amount in ``request.price`` as a bonus.
 
 The database tables for hits, workers, assignments, and actions are
 all defined in models/__init__.py.  Take a look.
