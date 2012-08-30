@@ -256,8 +256,9 @@ access until I reset networking:
 
 ## Setting up mail alerts
 
-You don't need to do this unless you're setting up a live server (the
-server you run host real turk jobs from).
+Set this up if you're running a live server to host
+real turk jobs.  It will send you emails whenever there's a problem
+with a turk job!
 
 Your host needs a public IP, DNS needs to be set up for it, including
 MX records.
@@ -271,6 +272,7 @@ Choose options:
  - and give it the right hostname
 
 Now /usr/sbin/sendmail should work, and it should be able to send mail.
+You can test it with ``send_me_mail('Hello barfbag!')`` from ``./shell``.
 
 ## Upgrading this code
 
