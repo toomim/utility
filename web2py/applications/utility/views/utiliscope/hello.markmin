@@ -326,4 +326,7 @@ type up to the top of the recently-created list on the search results.
 So you can set it up so that you're launching new ones periodically, and
 make your hits more visible.
 
+Sometimes a hit is marked "getting done" (in mturk terms, "unassignable")
+when someone isn't actually doing it.  MTurk is confusing.
+
 ## Fin
