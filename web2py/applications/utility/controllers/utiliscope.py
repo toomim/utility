@@ -173,8 +173,10 @@ def error():
     if get_vars and 'live' in get_vars:
         url = 'http://%s:%s/admin/default/ticket/%s' % (
             server_url, server_port, ticket)
-        send_me_mail('There was an error in your mturk study!!!\n'
-                     + 'Go check it out at %s' % url)
+        message = 'There was an error in your mturk study!!!\n' \
+                     + 'Go check it out at %s' % url
+        debug(message)
+        send_me_mail(message)
 
         # If we've got a hitid, let's expire it
         try: hitid = get_vars['hitId'][0]

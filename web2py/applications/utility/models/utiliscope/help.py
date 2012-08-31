@@ -115,7 +115,7 @@ def compute_histogram(array):
 
 def print_hits():
     for study in db().select(db.studies.ALL):
-        print study.description
+        print study.name
         for h in study.hits.select():
             print '   ', h.launch_date, h.status, h.hitid, h.price, h.othervars
 
@@ -275,6 +275,8 @@ def open_scheduler_tasks(task_name=None):
         query &= db.scheduler_task.task_name == task_name
     return db(query).select()
 def process_tickets():
+    return "NO! Don't use this."
+
     def get_table_row(table, row_header):
         # Look for the row with `header' in the first string of
         # the first TD of the row
