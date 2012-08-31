@@ -328,6 +328,7 @@ def turk_submit_url():
                request.assid,
                request.hitid)
     else:
+        soft_assert(request.testing, 'Trying to submit with bad parameters!!!')
         return URL(c='utiliscope', f='fake_submit_to_turk')
 
 
@@ -404,7 +405,7 @@ def check_daemon(task_name):
                                                task_name=task_name,
                                                repeats=0,
                                                period=period,
-                                               timeout=None,
+                                               timeout=sys.maxint,
                                                uuid=task_name)
             db.commit()
         except Exception:
