@@ -7,6 +7,7 @@
 
 <div style="background-color: #ddd; padding: 10px; font-size: 12px; margin-bottom: 20px;" class="clearfix">
 
+<div style="max-width: 500px">
 {{for k,v in conditions.items():}}
   {{=k}}
 
@@ -20,8 +21,12 @@
     </select>
   {{pass}}
 {{pass}}
+</div>
 
-<button style="margin-left: 50px;">
+<button id="reload" style="margin-left: 50px; margin-right: 20px;">
+   reload
+</button>
+<button id="throw" style="margin-left: 50px;">
    Throw a hit onto {{='turk SANDBOX' if sandboxp else 'LIVE turk'}}!
 </button>
 
@@ -40,15 +45,15 @@
 function reload_iframe() {
 	var params = {}
 	$('select').each(function () {
-		console.log(this);
 		params[this.name] = this.value; });
 	var url = "{{=XML(url)}}" + '&' + $.param(params);
 	console.log('Going to new url ' + url);
 	$('iframe').attr('src',url);
 }
 $('select').change(reload_iframe);
+$('button#reload').click(reload_iframe);
 
-$('button').click(function () {
+$('button#post').click(function () {
 	if (confirm('Sure? This will launch a {{=request.task}} hit onto the '
 				+ "{{='SANDBOX' if sandboxp else 'REAL LIVE'}}"
 				+ ' mturk.'))
@@ -61,4 +66,5 @@ $('button').click(function () {
 			}
 		});
 });
+
 </script>
