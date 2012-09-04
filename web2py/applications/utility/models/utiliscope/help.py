@@ -261,7 +261,7 @@ def store_set(key, value):
     return record.update_record(value=value) \
         if record else db.store.insert(key=key, value=value)
 
-def last_scheduler_errors(N=10):
+def error_tasks(N=10):
     errors = db(db.scheduler_run.status=='FAILED').select(limitby=(0,N),
                                                           orderby=~db.scheduler_run.id)
     for error in errors:

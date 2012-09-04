@@ -50,6 +50,8 @@ import gluon.contrib.simplejson as sj
 from gluon.storage import Storage
 import gluon.utils
 from datetime import datetime, timedelta
+tojson = sj.dumps
+fromjson = sj.loads
 
 # setup turk library
 turk.SANDBOXP = sandboxp
@@ -408,9 +410,9 @@ def check_daemon(task_name):
                                                timeout=sys.maxint,
                                                uuid=task_name)
             db.commit()
-        except Exception:
+        except Exception as e:
             # Means we tried to insert a second task due to race condition
-            debug('Race condition when inserting scheduler task')
+            debug('Race condition when inserting scheduler task: %s' % e)
             db.rollback()
 
 check_daemon('process_launch_queue_task')
