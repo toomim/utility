@@ -407,7 +407,7 @@ def check_daemon(task_name):
                                                task_name=task_name,
                                                repeats=0,
                                                period=period,
-                                               timeout=sys.maxint,
+                                               timeout=os.sys.maxint,
                                                uuid=task_name)
             db.commit()
         except Exception as e:
