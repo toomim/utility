@@ -213,6 +213,8 @@ This is easy on linux:
  utility=> \q
 ``
 
+In the above example, you must replace ``toomim`` with your username.
+
 Now edit settings.py and turn sqlite = False, and set the username
 and password in database_url.
 
@@ -236,9 +238,25 @@ browser to test it, and use my Mac terminal to run things.  Here's how:
 
 + Download VirtualBox and install Ubuntu on it
 + Give the VM a "host-only adapter" in the virtualbox settings.  It will probably get the ip address 192.168.56.101.
++ If you get an error when you try to add the host-only adapter, try going into VirtualBox preferences -> network -> click the (+) icon and ensure that vboxnet0 appears.
 + Ssh into that address from your actual computer.  This is your terminal.
 + Set a network filesystem on the VM, either using virtualbox/vmware's folder sharing or using sshfs.  Mount the folder in osx/windows, and open the files using your normal text editor.
 + Set server_url to '192.168.56.101' in models/settings.py
++ You may need to edit /etc/network/interfaces and add the following lines:
+
+`` auto eth1
+ iface eth1 inet static
+     address 192.168.56.101
+     netmask 255.255.255.0
+``
+
+and then run
+``sudo ifup eth1
+``
+
+Also, make sure you run the following command before deploying:
+`` sudo apt-get install python-scipy
+``
 
 Here's the command I use with sshfs:
 
