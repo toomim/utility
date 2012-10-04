@@ -337,7 +337,14 @@ def update_ass_from_mturk(hitid):
 def process_launch_queue():
     for hit in db((db.hits.status == 'unlaunched')
                   & (db.hits.launch_date < datetime.now())).select():
-        launch_hit(hit, mystery_task_params(hit.controller_func))
+        if generalp:
+            study = get_one(db.studies.id == hit.study)
+            params = sj.loads(study.params)
+            params['task'] = hit.controller_func
+            my_params = make_task_params(**params)
+            launch_hit(hit,my_params)
+        else:    
+            launch_hit(hit, mystery_task_params(hit.controller_func))
 
 # Shortcut functions for turk calls
 get_hit = turk.get_hit

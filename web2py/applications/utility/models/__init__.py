@@ -107,6 +107,7 @@ db.define_table('studies',
                 db.Field('description', 'text'),
                 db.Field('controller_func', 'text'),
                 db.Field('conditions', 'text'),
+                db.Field('params', 'text'),
                 db.Field('results', 'text'),
                 db.Field('publish', 'boolean', default=False),
                 migrate=migratep, fake_migrate=fake_migratep)
@@ -407,7 +408,7 @@ def check_daemon(task_name):
                                                task_name=task_name,
                                                repeats=0,
                                                period=period,
-                                               timeout=os.sys.maxint,
+                                               timeout = 24 * 60 * 60 * 2, # two days should be enough for everybody
                                                uuid=task_name)
             db.commit()
         except Exception as e:

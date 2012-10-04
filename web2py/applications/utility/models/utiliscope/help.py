@@ -71,6 +71,41 @@ def mystery_task_params(task):
          'tag' : None})
 
 
+# === functions for generalized task creation ===
+def make_task_params(task,title,description,keywords,reward,duration=ass_duration,lifetime=hit_lifetime,assignments=1):
+    return Storage(
+        {'question' : turk.external_question(hit_serve_url(task),
+                                            iframe_height),
+         'title' : title,
+         'description' : description,
+         'keywords' : keywords,
+         'ass_duration' : duration,
+         'lifetime' : lifetime,
+         'assignments' : assignments,
+         'reward' : reward,
+         'tag' : None})
+
+def init_gen_study(task, name, description, conditions, params):
+    study = get_or_make_one(db.studies.name == name,
+                            db.studies,
+                            {'name' : name,
+                             'launch_date' : datetime.now(),
+                             'description' : description,
+                             'controller_func' : task,
+                             'params' : sj.dumps(params, sort_keys=True)})
+    study.update_record(conditions = sj.dumps(conditions, sort_keys=True))
+    options.task = conditions
+    db.commit()
+
+# change so that individual hits can use different controllers?
+def schedule_gen_hits(study_name,arg_dict_list):
+    study = get_one(db.studies.name == study_name)
+    for arg_dict in arg_dict_list:
+        schedule_hit(now, study.id, study.controller_func, arg_dict)
+    
+
+# ==============
+
 def make_mystery_task(controller_and_func, lifetime = hit_lifetime):
         return turk.create_hit(turk.external_question(turk.external_url(controller_and_func),
                                                       iframe_height),
