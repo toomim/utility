@@ -194,7 +194,7 @@ def error():
         extra = ''
         if request.sandbox:
             extra = '''<div style="background-color: #eee; margin: 50px; padding: 20px">
-                         (This message only appears on the sandbox)<br>Ticket here: <a href="%s">%s</a></div>'''\
+                         Here's a handy link to the ticket&emdash;note that this only appears on the sandbox:<br><a href="%s">%s</a></div>'''\
                 % (url,ticket)
 
         return 'server error' + extra
@@ -235,7 +235,7 @@ def expire_hit():
 def launch_one_off_hit():
     assert sandboxp == sj.loads(request.vars.sandbox), \
            'You need to reload that webpage, or reset the sandboxp variable!'
-    schedule_test_study(request.vars.task)
+    launch_test_study(request.vars.task)
     debug("We added a hit to the launch queue.")
     return 'success'
 

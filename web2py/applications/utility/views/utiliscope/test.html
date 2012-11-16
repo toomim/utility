@@ -53,7 +53,7 @@ function reload_iframe() {
 $('select').change(reload_iframe);
 $('button#reload').click(reload_iframe);
 
-$('button#post').click(function () {
+$('button#throw').click(function () {
 	if (confirm('Sure? This will launch a {{=request.task}} hit onto the '
 				+ "{{='SANDBOX' if sandboxp else 'REAL LIVE'}}"
 				+ ' mturk.'))

@@ -1,5 +1,157 @@
 from scipy import array
 
+# ============== Data Analysis =============
+def study_result(study, result):
+    if not study.results: return ''
+    d = sj.loads(study.results)
+    if result not in d: return ''
+    return d[result]
+
+def cent_workrate(study):
+    r = study_result(study, '1cent_workrate')
+    if r == '': return r
+    else:
+        min = '%.0f' % r[0]
+        max = '%.0f' % r[1]
+        if min == max: return min + ' hits'
+        else: return min + '-' + max + ' hits'
+def compute_histogram(array):
+    result = [0]*(max(array)+1)
+    for x in array:
+        result[x] += 1
+    return result
+
+
+########################
+# Geolocation
+
+def load_ip_data(force=False):
+    if db(db.ips.id > 0).count() != 0 and not force:
+        log('Already have IP data loaded.')
+        return
+    else:
+        log('Loading IPLocation database')
+
+    db.ips.truncate('cascade')
+    db.countries.truncate('cascade') # shouldn't be necessary
+    db.continents.truncate('cascade') # but what the hay
+
+    import csv
+    with open('../ipligence-community.csv','rb') as f:
+        log('Populating continents')
+        rows = csv.reader(f)
+        for row in rows:
+            if not get_one(db.continents.code==row[4]):
+                db.continents.insert(code=row[4], name=row[5])
+        db.commit()
+
+    with open('../ipligence-community.csv','rb') as f:
+        log('Populating countries')
+        rows = csv.reader(f)
+        for row in rows:
+            if not get_one(db.countries.code==row[2]):
+                continent = get_one(db.continents.code==row[4])
+                db.countries.insert(code=row[2], name=row[3], continent=continent)
+        db.commit()
+
+    with open('../ipligence-community.csv','rb') as f:
+        log('Populating ips')
+        rows = csv.reader(f)
+        for row in rows:
+            country = get_one(db.countries.code==row[2])
+            db.ips.insert(from_ip=row[0], to_ip=row[1], country=country)
+        db.commit()
+
+def number_to_ip( intip ):
+        octet = ''
+        for exp in [3,2,1,0]:
+                octet = octet + str(intip / ( 256 ** exp )) + "."
+                intip = intip % ( 256 ** exp )
+        return(octet.rstrip('.'))
+
+def ip_to_number( dotted_ip ):
+        exp = 3
+        intip = 0
+        for quad in dotted_ip.split('.'):
+                intip = intip + (int(quad) * (256 ** exp))
+                exp = exp - 1
+        return(intip)
+
+def ip_country(ip):
+    num = str(ip_to_number(ip))
+    rows = db((db.ips.from_ip <= num)
+             & (db.ips.to_ip > num)).select()
+    if not(len(rows) == 1 and rows[0] and rows[0].country):
+        return get_one(db.countries.code == '')
+    else:
+        return db.countries[rows[0].country]
+
+def worker_country(workerid):
+    return db.countries[get_one(db.workers.workerid == workerid).country]
+
+def worker_ip(workerid):
+    row = db(db.actions.workerid == workerid).select(db.actions.ip, limitby=(0,1), orderby=~db.actions.time)
+    if row and row.ip:
+        return row.ip
+    else:
+        return None
+
+def country_time_zone(country):
+    continents = {'NA' : 2,
+                  'SA' : 2,
+                  'EU' : 9,
+                  'CB' : 4,
+                  'AF' : 9,
+                  'ME' : 10,
+                  'CA' : 1,
+                  'AS' : 15,
+                  'OC' : 17,
+                  'COMMUNICAT' : 0,
+                  'MEDIA' : 0,
+                  '' : 0}
+
+    countries = {'IN' : 12,
+                 '' : 0}
+
+    if country.code in countries:
+        return countries[country.code]
+    elif country.continent.code in continents:
+        return continents[country.continent.code]
+    
+
+def update_worker_info(force=False):
+    rows = db().select(db.actions.workerid, distinct=True)
+    if len(rows) > db(db.workers.id>0).count(distinct=db.workers.workerid) \
+            and not force:
+        log('Already have worker info updated.')
+        return
+    else:
+        log('Updating worker info')
+
+    for i,row in enumerate(rows):
+        ip = db(db.actions.workerid == row.workerid).select(limitby=(0,1))[0].ip
+        if i % 100 == 0:
+            logger.info('updating iteration %s for ip %s' % (i,ip))
+        country = ip_country(ip)
+        if country.code == '':
+            logger.info('No country for IP %s' % ip)
+        time_zone = country_time_zone(country) or 0
+        update_or_insert_one(db.workers, 'workerid', row.workerid,
+                             dict(latest_ip=ip,
+                                  country=country,
+                                  time_zone=time_zone))
+    db.commit()
+
+
+# ==========================================================
+# ============== Uncategorized Code Dump Below =============
+# ==========================================================
+# ==========================================================
+# ==========================================================
+# ==========================================================
+# ============== Uncategorized Code Dump Below =============
+# ==========================================================
+
 def available_prices(study):
     return [h.price for h in
             db((db.hits.study == study.id) & (db.hits.price != None)) \

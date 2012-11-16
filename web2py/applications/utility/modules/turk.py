@@ -12,6 +12,7 @@ from datetime import datetime, timedelta
 import traceback
 import types
 from dal import *
+import gluon.contrib.simplejson as json
 # import autoreload
 # autoreload.run()
 
@@ -24,6 +25,7 @@ SERVICE_VERSION = '2008-04-01'
 
 SANDBOXP = False
 LOCAL_EXTERNAL_P = True
+
 
 
 # ==================================
@@ -84,6 +86,12 @@ class TurkAPIError(Exception):
     def __str__(self):
         return repr(self.value)
 
+amazon_health_log = []
+def error_rate():
+    amazon_health_log = store_get('amazon_health_log')
+    if not amazon_health_log: return 0.0
+    recent = amazon_health_log[-200:]
+    return float(recent.count('error')) / float(len(recent))
 def error_check(result_xml):
     # Check for and print results and errors
     errors_nodes = result_xml.getElementsByTagName('Errors')
@@ -93,8 +101,10 @@ def error_check(result_xml):
             for error_node in errors_node.getElementsByTagName('Error'):
                 msg += '\n  Error code:    ' + error_node.getElementsByTagName('Code')[0].childNodes[0].data
                 msg += '\n  Error message: ' + error_node.getElementsByTagName('Message')[0].childNodes[0].data
+        store_append('amazon_health_log', 'error')
         raise TurkAPIError(msg)
 
+    store_append('amazon_health_log', 'ok', max_length=400)
     return False
 
 
@@ -123,8 +133,6 @@ except:
 def pp(doc):
     print doc.toprettyxml().replace('\t', '   ')
 def prettyable(doc):
-#     def pretty_print(self):
-#         print doc.toprettyxml().replace('\t', '   ')
     doc.pp = types.MethodType(pp, doc)
     return doc
 
@@ -519,6 +527,9 @@ db.define_table('assignments',
                 db.Field('paid', 'double', default=0.0),
                 db.Field('other', 'text', default=''))
 
+db.define_table('store',
+                db.Field('key', 'text', unique=True),
+                db.Field('value', 'text'))
 
 def update_hit(xml=None, hitid=None):
     if xml:
@@ -655,6 +666,21 @@ def extra_db_methods_vf(clss):
    del db[tablename].virtualfields[:] # We clear virtualfields each time
    db[tablename].virtualfields.append(clss())
    return clss
+
+def store_get(key):
+    r = db(db.store.key==key).select().first()
+    return r and json.loads(r.value)
+def store_set(key, value):
+    value = json.dumps(value); record = db.store(db.store.key==key)
+    result = record.update_record(value=value) \
+        if record else db.store.insert(key=key, value=value)
+    db.commit()
+    return result
+def store_append(key, value, max_length=None):
+    x = store_get(key) or []; x.append(value)
+    if max_length and len(x) > max_length:
+        x = x[-max_length:]
+    return store_set(key, x)
 
 # ==================================
 #  DB helper methods

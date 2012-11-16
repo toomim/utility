@@ -46,7 +46,7 @@ if 'LoadSettingsOnly' in globals():
 # Import
 import applications.utility.modules.turk as turk
 from applications.utility.modules.turk import TurkAPIError
-import gluon.contrib.simplejson as sj 
+import gluon.contrib.simplejson as sj
 from gluon.storage import Storage
 import gluon.utils
 from datetime import datetime, timedelta
@@ -105,9 +105,9 @@ db.define_table('studies',
                 db.Field('launch_date', 'datetime'),
                 db.Field('name', 'text'),
                 db.Field('description', 'text'),
-                db.Field('controller_func', 'text'),
+                db.Field('task', 'text'),
                 db.Field('conditions', 'text'),
-                db.Field('params', 'text'),
+                db.Field('hit_params', 'text', default='{}'),
                 db.Field('results', 'text'),
                 db.Field('publish', 'boolean', default=False),
                 migrate=migratep, fake_migrate=fake_migratep)
@@ -160,7 +160,7 @@ db.define_table('hits',
                 db.Field('xmlcache', 'text'),
 
                 db.Field('launch_date', 'datetime'),
-                db.Field('controller_func', 'text'),
+                db.Field('task', 'text'),
 
                 # Variables passed to the controller
                 # -- NO LONGER USED
@@ -335,14 +335,7 @@ def turk_submit_url():
         return URL(c='utiliscope', f='fake_submit_to_turk')
 
 
-from gluon.scheduler import Scheduler
-Scheduler(db
-#           dict(send_email=send_email_task,
-#                    process_launch_queue_task=process_launch_queue_task,
-#                    refresh_hit_status=refresh_hit_status,
-#                    process_bonus_queue=process_bonus_queue
-#                    )
-          )
+from gluon.scheduler import Scheduler; Scheduler(db)
 
 import random
 we_are = random.randint(0,10)
@@ -416,7 +409,7 @@ def check_daemon(task_name):
             debug('Race condition when inserting scheduler task: %s' % e)
             db.rollback()
 
-check_daemon('process_launch_queue_task')
+check_daemon('process_launch_queue')
 check_daemon('refresh_hit_status')
 check_daemon('process_bonus_queue')
 #check_daemon('process_tickets', 30)
@@ -429,7 +422,7 @@ def record_hit_data(hitid,
                     status=None,
                     xmlcache=None,
                     launch_date=None,
-                    controller_func=None,
+                    task=None,
                     price=None,
                     othervars=None,
                     url=None):
@@ -449,7 +442,7 @@ def record_hit_data(hitid,
         if status: hit.update_record(status=status)
         if xmlcache: hit.update_record(xmlcache=xmlcache)
         if launch_date: hit.update_record(launch_date=launch_date)
-        if controller_func: hit.update_record(controller_func=controller_func)
+        if task: hit.update_record(task=task)
         if price: hit.update_record(price=price)
         if othervars: hit.update_record(othervars=othervars)
         if url: hit.update_record(url=url)
@@ -460,7 +453,7 @@ def record_hit_data(hitid,
                        status=status,
                        xmlcache=xmlcache,
                        launch_date=launch_date,
-                       controller_func=controller_func,
+                       task=task,
                        price=price,
                        othervars=othervars,
                        url=url)
@@ -689,7 +682,7 @@ def load_live_hit():
         othervars = sj.loads(hit.othervars)
         request.update(othervars)
         request.vars.update(othervars)
-    request.task = hit.controller_func
+    request.task = hit.task
     # Set up the task options, now that we know the task:
     make_request_vars_convenient() 
 
