@@ -120,10 +120,12 @@ try:
 except:
     pass
 
+def pp(doc):
+    print doc.toprettyxml().replace('\t', '   ')
 def prettyable(doc):
-    def pretty_print(self):
-        print doc.toprettyxml().replace('\t', '   ')
-    doc.pp = types.MethodType(pretty_print, doc)
+#     def pretty_print(self):
+#         print doc.toprettyxml().replace('\t', '   ')
+    doc.pp = types.MethodType(pp, doc)
     return doc
 
 def get(xmlobj, tagname):
