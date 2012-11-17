@@ -292,11 +292,12 @@ Choose options:
 Now /usr/sbin/sendmail should work, and it should be able to send mail.
 You can test it with ``send_me_mail('Hello barfbag!')`` from ``./shell``.
 
-## Upgrading this code
+## Upgrading to new versions of utility
 
-Just take the new updated ``utility.zip`` file and unzip it over the
-whole code again.  It will only overwrite the utility files.  Your
-code is safe.
+Just download and unzip the latest
+[[utility.zip http://homes.cs.washington.edu/~toomim/utility.zip]] file over your
+utility directory.  I know it feels weird, but I guarantee it will
+only overwrite the utility files.  Your code is safe.
 
 ## Custom HITS and studies
 
