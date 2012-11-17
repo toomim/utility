@@ -1,3 +1,37 @@
+# ============== Setting up a Fresh DB =============
+def setup_db(study=None, force=False):
+    log('Creating postgres indices')
+    create_indices_on_postgres()
+    load_ip_data(force)
+    update_worker_info(force)
+    if study:
+        log('Populating runs for study %d' % study)
+        populate_runs(study)
+
+def create_indices_on_postgres():
+    '''Creates a set of indices if they do not exist'''
+    ## Edit this list of table columns to index
+    ## The format is [('table', 'column')...]
+    indices = [('actions', 'study'),
+               ('actions', 'assid'),
+               ('actions', 'hitid'),
+               ('actions', 'time'),
+               ('actions', 'workerid'),
+               ('countries', 'code'),
+               ('continents', 'code'),
+               ('hits', 'study'),
+               ('ips', 'from_ip'),
+               ('ips', 'to_ip'),
+               ('workers', 'workerid'),
+               ('store', 'key')]
+    for table, column in indices:
+        index_exists = db.executesql("select count(*) from pg_class where relname='%s_%s_idx';"
+                                     % (table, column))[0][0] == 1
+        if not index_exists:
+            db.executesql('create index %s_%s_idx on %s (%s);'
+                          % (table, column, table, column))
+        db.commit()
+
 # ============== Migration Help =============
 #import hashlib
 #log('Using db %s %s' % (database, hashlib.md5(database).hexdigest()))
@@ -35,40 +69,6 @@ def reload_model(name):
     '''THIS DOES NOT WORK'''
     execfile(request.folder + '/models/' + name + '.py')
     return 'THIS DOES NOT WORK'
-
-
-# ============== Setting up a Fresh DB =============
-def create_indices_on_postgres():
-    '''Creates a set of indices if they do not exist'''
-    ## Edit this list of table columns to index
-    ## The format is [('table', 'column')...]
-    indices = [('actions', 'study'),
-               ('actions', 'assid'),
-               ('actions', 'hitid'),
-               ('actions', 'time'),
-               ('actions', 'workerid'),
-               ('countries', 'code'),
-               ('continents', 'code'),
-               ('hits', 'study'),
-               ('ips', 'from_ip'),
-               ('ips', 'to_ip'),
-               ('workers', 'workerid'),
-               ('store', 'key')]
-    for table, column in indices:
-        index_exists = db.executesql("select count(*) from pg_class where relname='%s_%s_idx';"
-                                     % (table, column))[0][0] == 1
-        if not index_exists:
-            db.executesql('create index %s_%s_idx on %s (%s);'
-                          % (table, column, table, column))
-        db.commit()
-def setup_db(study=None, force=False):
-    log('Creating postgres indices')
-    create_indices_on_postgres()
-    load_ip_data(force)
-    update_worker_info(force)
-    if study:
-        log('Populating runs for study %d' % study)
-        populate_runs(study)
 
 
 # ============== Database Maintenance Helpers =============
@@ -145,6 +145,9 @@ def unpaid_assignments(workerid = None):
     if workerid: query = query & (db.assignments.workerid == workerid)
     asses = db(query).select()
     return asses
+def approve_assignment(assid, hitid):
+    turk.approve_assignment(assid)
+    update_ass_from_mturk(hitid)
 
 def pay_unpaid_assignments(workerid = None):
     for ass in unpaid_assignments(workerid):

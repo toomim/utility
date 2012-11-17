@@ -176,10 +176,6 @@ def update_ass_from_mturk(hitid):
                    paid = bonus_amount,
                    xmlcache=ass.toxml())
     
-def approve_assignment(assid, hitid):
-    turk.approve_assignment(assid)
-    update_ass_from_mturk(hitid)
-
 def give_bonus_up_to(assid, workerid, bonusamt, reason):
     delta = turk.give_bonus_up_to(assid, workerid, float(bonusamt), reason)
     ass = db.assignments(assid=assid)
@@ -189,7 +185,7 @@ def give_bonus_up_to(assid, workerid, bonusamt, reason):
 
 
 
-# ============== Scheduling Hits =============
+# ============== Launch a Whole Study =============
 def schedule_hit(launch_date, study, task, othervars):
     def varnum(array, index): return array[index] if len(array) > index else None
     db.hits.insert(status = 'unlaunched',
@@ -198,10 +194,6 @@ def schedule_hit(launch_date, study, task, othervars):
                    task = task,
                    othervars = sj.dumps(othervars))
     db.commit()
-def launch_test_study(task, num_hits=1):
-    study_name = 'teststudy %s' % task
-    launch_study(num_hits, task, study_name, " ... test ...")
-
 def launch_study(num_hits, task, name, description, hit_params=None):
     hit_params = hit_params or {}
     conditions = options[task]
@@ -216,10 +208,12 @@ def launch_study(num_hits, task, name, description, hit_params=None):
     for i in range(num_hits):
         schedule_hit(datetime.now(), study.id, task, {})
     db.commit()
+def launch_test_study(task, num_hits=1):
+    study_name = 'teststudy %s' % task
+    launch_study(num_hits, task, study_name, " ... test ...")
 
 
-# ============== Launching Hits =============
-def process_launch_queue_task(): pass # for backwards compatibility
+# ============== Launch a Eenie-Weenie Single Hit =============
 @log_scheduler_errors
 def process_launch_queue():
     for hit in db((db.hits.status == 'unlaunched')
