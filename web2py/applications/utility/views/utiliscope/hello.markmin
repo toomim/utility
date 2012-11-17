@@ -296,8 +296,8 @@ You can test it with ``send_me_mail('Hello barfbag!')`` from ``./shell``.
 
 Just download and unzip the latest
 [[utility.zip http://homes.cs.washington.edu/~toomim/utility.zip]] file over your
-utility directory.  I know it feels weird, but I guarantee it will
-only overwrite the utility files.  Your code is safe.
+existing utility directory.  This
+will overwrite the utility files, and leave your files alone.  Feels weird?  Works great!
 
 ## Custom HITS and studies
 
