@@ -4,7 +4,7 @@
 <h1 style="margin-left: 60px; margin-top: 0px;">Dashboard</h1>
 <br>
 
-Currently serving {{=num_open_hits()}} hits<br><br>
+Currently serving {{=num_open_hits()}} hits. Amazon health: <span id="amazon_health"></span>/10.<br><br>
 
 <table>
 <tr><td style="width: 450px">
@@ -44,6 +44,7 @@ $('iframe')[0].onload = setup_iframe;
 $('iframe')[1].onload = setup_iframe;
 function reload () {
 	$('iframe').each(function () {
+		if (window.stopit) return;
 		var iframe = this;
 		var doc_height = $(iframe.contentWindow.document).height();
 		var win_height = $(iframe.contentWindow).height();
@@ -54,7 +55,8 @@ function reload () {
 	});
 }
 
-setInterval(reload, 500);
+
+setInterval(reload, 1000);
 
 $('#space').click(function () {
 	$.ajax({
@@ -62,6 +64,12 @@ $('#space').click(function () {
 		url: "/utiliscope/add_log_blanks"
 	})});
 
+
+function fetch_amazon_health() {
+	$('#amazon_health').load("/utiliscope/amazon_health")
+}
+setInterval(fetch_amazon_health, 10000) // Every 10 seconds
+fetch_amazon_health()
 </script>
 
 

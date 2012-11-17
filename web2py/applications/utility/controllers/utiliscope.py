@@ -217,6 +217,8 @@ def error():
 
 def dash():
     return dict(theme='black')
+def amazon_health():
+    return int((1.0-turk.error_rate()) * 10)
 def add_log_blanks():
     debug('')
     debug('')
