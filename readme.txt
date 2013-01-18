@@ -2,9 +2,7 @@
   How to install and run:
 ======================================
 
-1. Tell mike to put your ssh public key onto git@yuno.us:~/.ssh/authorized_keys2
-2. git clone git@yuno.us:utility
-3. cd to utility/ and run ./serve
+cd to utility/ and run ./serve
 
 Now try it out by opening a web browser to http://localhost:8000
 
