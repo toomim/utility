@@ -48,9 +48,7 @@ applications/*/cache/*
 !applications/*/cache/hello
 applications/*/uploads/*
 applications/*/uploads/hello
-applications/*/*.py[oc]
-applications/examples/static/epydoc
-applications/examples/static/sphinx
+applications/examples/*
 applications/admin/cron/cron.master
 applications/utility/static/debug
 applications/utility/static/debug_tasks
