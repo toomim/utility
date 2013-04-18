@@ -5,7 +5,9 @@ def scheduler_errors(N=10):
     for error in errors:
         print error.id, db.scheduler_task[error.scheduler_task].task_name, error.traceback
 def clear_scheduler_errors():
-    db(db.scheduler_run.status=='FAILED').delete(); db.commit()
+    db(db.scheduler_run.status=='FAILED').delete()
+    db(db.scheduler_task.status=='FAILED').delete()
+    db.commit()
 def open_scheduler_tasks(task_name=None):
     query = db.scheduler_task.status.belongs(('QUEUED',
                                               'ASSIGNED',
@@ -26,7 +28,7 @@ def log_scheduler_errors(f):
 
 # ============== Task Definitions =============
 @log_scheduler_errors
-def send_email_task(to, subject, message):
+def send_email(to, subject, message):
     debug_t('Sending email now from within the scheduler!')
     if True:   # Use sendmail
         SENDMAIL = "/usr/sbin/sendmail" # sendmail location
