@@ -17,9 +17,9 @@ def open_scheduler_tasks(task_name=None):
         query &= db.scheduler_task.task_name == task_name
     return db(query).select()
 def log_scheduler_errors(f):
-    def wrapper():
+    def wrapper(*args, **kwargs):
         try:
-            f()
+            f(*args, **kwargs)
         except Exception as e:
             debug_t('Error in %s! %s\nRun scheduler_errors() for more info' % (f.__name__,e))
             raise
@@ -34,7 +34,7 @@ def send_email(to, subject, message):
         SENDMAIL = "/usr/sbin/sendmail" # sendmail location
         import os
         p = os.popen("%s -t" % SENDMAIL, "w")
-        p.write("To: " + email_address + "\n")
+        p.write("To: " + to + "\n")
         p.write("Subject: " + subject + "\n")
         p.write("\n") # blank line separating headers from body
         p.write(message)
@@ -98,7 +98,13 @@ def refresh_hit_status():
 def process_bonus_queue():
     try:
         for row in db().select(db.bonus_queue.ALL):
-            #debug_t('Processing bonus queue row %s' % row.id)
+            # Skip workers that we aren't ready for yet
+            if 'bonus_delay' in globals() and bonus_delay:
+                action = db.actions(assid=row.assid, action='finished')
+                if not action:
+                    logger_t.error('No finish action on bonus %s' % row.assid);
+                elif (datetime.now() - action.time).total_seconds() < bonus_delay:
+                    continue
             try:
                 approve_and_bonus_up_to(row.hitid, row.assid, row.worker, float(row.amount), row.reason)
                 debug_t('Success!  Deleting row.')
