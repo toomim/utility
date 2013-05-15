@@ -93,9 +93,12 @@ def print_hits():
         for h in study.hits.select():
             print '   ', h.launch_date, h.status, h.hitid, h.price, h.othervars
 
-def print_studies():
+def print_studies(more=False):
     for study in db().select(db.studies.ALL, orderby=db.studies.id):
-        print '%d\t%d\t%s' % (study.id, db(db.hits.study == study).count(), study.name)
+        print '%d\t%d\t%s%s' % (study.id,
+                                db(db.hits.study == study).count(),
+                                study.name,
+                                '\t' + study.description if more else '')
 
 
 def open_hits():
