@@ -5,7 +5,7 @@
 <br>
 
 Currently serving {{=num_open_hits()}} hits. Amazon health: <span id="amazon_health"></span>/10.
-Background tasks: {{=worker_stats.status}}<br><br>
+Background tasks: {{=XML(worker_stats.status)}}<br><br>
 
 <table>
 <tr><td style="width: 450px">
@@ -79,4 +79,9 @@ iframe {
    background-color: #ddd;
    color: #eee;
 }
+.bigred, .red {
+	font-weight:bold;
+	color: #f00;
+}
+.bigred { font-size: 300px; }
 </style>

@@ -221,18 +221,20 @@ def dash():
     max_heartbeat = max([(now - w.last_heartbeat).total_seconds()
                          for w in workers])
 
+    red = '<span class="red">%s!!</span>'
+
     status = 'OK'
     if sqlitep: status = 'Disabled (sqlite mode)'
-    elif len(tasks)<4: status = 'MISSING TASKS!!'
-    elif len(workers)<3: status = 'MISSING WORKERS!!'
-    elif max_heartbeat < 10: status = 'NOT RUNNING!!'
+    elif len(tasks) < 4: status = red % 'MISSING TASKS'
+    elif len(workers) < 3: status = red % 'MISSING WORKERS'
+    elif max_heartbeat > 10: status = red % 'NOT RUNNING'
 
     return dict(theme='black',
                 worker_stats=Storage(count=len(workers), status=status))
 def amazon_health():
     rate = int((1.0-turk.error_rate()) * 10)
     if rate <= 8:
-        rate = '<span style="font-size: 300px; font-weight:bold; color: #f00;">%s</span>' % rate
+        rate = '<span class="bigred">%s</span>' % rate
     return rate
 def add_log_blanks():
     debug('')
