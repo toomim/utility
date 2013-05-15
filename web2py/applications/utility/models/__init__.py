@@ -385,9 +385,8 @@ def check_daemon2(task_name, period=None):
         tasks[0].update_record(period=period)
         db.commit()
 
-def check_daemon(task_name):
+def check_daemon(task_name, period=4):
     if sqlitep: return False
-    period = 4
     task = db.scheduler_task(uuid=task_name)
     #print ('task is %s' % (not (not task)))
     if not task or task.status not in ('QUEUED', 'ASSIGNED', 'RUNNING', 'ACTIVE') \
@@ -412,6 +411,7 @@ def check_daemon(task_name):
 check_daemon('process_launch_queue')
 check_daemon('refresh_hit_status')
 check_daemon('process_bonus_queue')
+check_daemon('periodic_maintenance', 60 * 60 * 24) # Run once a day
 #check_daemon('process_tickets', 30)
 db.tasks = db.scheduler_task
 
@@ -510,6 +510,7 @@ def send_me_mail(message):
     db.scheduler_task.insert(function_name='send_email',
                              application_name='utility/utiliscope',
                              vars=sj.dumps(vars))
+    db.commit()
 
 last_time = start_time
 def checkpoint(what, do_total_time=False):

@@ -54,6 +54,12 @@ def send_email(to, subject, message):
     debug_t('Sent!')
 
 
+# Initial Setup, Periodic Maintenance
+@log_scheduler_errors
+def periodic_maintenance():
+    setup_db()
+
+
 @log_scheduler_errors
 def refresh_hit_status():
     hits = db(db.hits.status.belongs(('open', 'getting done'))).select()
@@ -93,18 +99,23 @@ def refresh_hit_status():
         debug_t('MTurk API went bogus for refreshing %s/%s hits',
                 len(failed_refreshes), len(hits))
 
+
 # ============== Approving Hits and Paying People Bonus =============
 @log_scheduler_errors
 def process_bonus_queue():
     try:
         for row in db().select(db.bonus_queue.ALL):
             # Skip workers that we aren't ready for yet
+            #debug_t('Checking for bonus_delay.')
             if 'bonus_delay' in globals() and bonus_delay:
                 action = db.actions(assid=row.assid, action='finished')
                 if not action:
                     logger_t.error('No finish action on bonus %s' % row.assid);
                 elif (datetime.now() - action.time).total_seconds() < bonus_delay:
+                    #logger_t.debug('Not %s minutes yet for assid %s', bonus_delay/60, row.assid)
                     continue
+
+            #debug_t('Processing bonus queue row %s' % row.id)
             try:
                 approve_and_bonus_up_to(row.hitid, row.assid, row.worker, float(row.amount), row.reason)
                 debug_t('Success!  Deleting row.')
@@ -255,7 +266,8 @@ def launch_hit(hit):
                                  params.lifetime,
                                  params.assignments,
                                  params.reward,
-                                 params.tag)
+                                 params.tag,
+                                 params.block_india)
 
         hitid = turk.get(result, 'HITId')
         if not hitid: raise TurkAPIError('LOST A HIT! This shouldn\'t happen! check this out.')
@@ -284,7 +296,8 @@ mystery_task_params = Storage(
          'lifetime' : hit_lifetime,
          'assignments' : 1,
          'reward' : 0.0,
-         'tag' : None})
+         'tag' : None,
+         'block_india' : True})
 
 
 # ============== Junk Code (will delete soon) =============

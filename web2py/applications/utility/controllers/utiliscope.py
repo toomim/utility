@@ -398,6 +398,28 @@ def dolores():
                 conditions=available_conditions(study)
                 )
 
+
+def stats():
+    study = db.studies(request.args[0])
+    ignored = []
+    if 'bad_workers' in globals(): ignored = bad_workers
+    return dict(study=study,
+                num_workers=len(db(db.actions.study==study).select(db.actions.workerid,distinct=True)),
+                stats = study_stats(study, ignored),
+                work_rates = study_work_rates(study, ignored))
+
+def study_csv():
+    study = db.studies(request.args[0])
+    dir = 'applications/utility/static/' + study.task
+    try: os.mkdir(dir)          # Make sure directory exists
+    except OSError as e: pass
+
+    fullpath = '%s/study_%d.csv' % (dir, study.id)
+    study_runs_csv(study, fullpath)
+
+    return '<a href="/static/%s/study_%d.csv">Study %d data as CSV</a>' \
+        % (study.task, study.id, study.id)
+
 def view():
     '''
     

@@ -90,7 +90,7 @@ def worker_country(workerid):
     return db.countries[get_one(db.workers.workerid == workerid).country]
 
 def worker_ip(workerid):
-    row = db(db.actions.workerid == workerid).select(db.actions.ip, limitby=(0,1), orderby=~db.actions.time)
+    row = db(db.actions.workerid == workerid).select(db.actions.ip, limitby=(0,1), orderby=~db.actions.time).first()
     if row and row.ip:
         return row.ip
     else:
@@ -179,18 +179,33 @@ def integrate(list):
 #     from pylab import *
 
 
-def study_stats(study):
+def study_stats(study, ignored_workers=[]):
     time_range = db(db.actions.study == study).select(
         db.actions.time.min(),
         db.actions.time.max())[0]
     time_range = (time_range['MIN(actions.time)'],
                   time_range['MAX(actions.time)'])
-    time_length = (time_range[1] - time_range[0]).seconds
+    time_length = (time_range[1] - time_range[0])
 
     num_hits_total = len(db((db.actions.study == study.id)
-                            &(db.actions.action == 'finished'))\
+                            &(db.actions.action == 'finished')
+                            &(~db.actions.workerid.belongs(ignored_workers)))\
                              .select(db.actions.hitid, distinct=True))
-    return Storage(time_range=time_range, time_length=time_length, num_hits_total=num_hits_total)
+
+    query = (db.actions.study==study)&(~db.actions.workerid.belongs(ignored_workers))
+
+    hit_times = []
+    for row in db(query & (db.actions.action=='finished')).select():
+        start = db(query
+                   &(db.actions.action=='accept')
+                   &(db.actions.assid==row.assid)).select(limitby=(0,1)).first()
+        hit_times.append(row.time - start.time)
+    median_hit_time = hit_times[len(hit_times)/2]
+
+    return Storage(time_range=time_range,
+                   time_length=time_length,
+                   median_hit_time=median_hit_time,
+                   num_hits_total=num_hits_total)
 
 
 def plot_trickle_at(study, stats, steps, i):
@@ -432,14 +447,12 @@ def calc_trickle2(study, condition, time_window=None):
 
 def censored_workers(study, condition):
     def extract_deadzone(row, study):
-        s = row.start_time
-        if not s:
-            s = db(db.actions.study == study).select(db.actions.time.min())[0]['MIN(actions.time)']
-
-        e = row.end_time
-        if not e:
-            e = db(db.actions.study == study).select(db.actions.time.max())[0]['MAX(actions.time)']
-        return (s,e)
+        return (row.start_time \
+                    or db(db.actions.study == study) \
+                    .select(db.actions.time.min())[0]['MIN(actions.time)'],
+                row.end_time \
+                    or db(db.actions.study == study) \
+                    .select(db.actions.time.max())[0]['MAX(actions.time)'])
 
     deadz = db(db.dead_zones.study == study).select()
     deadz = [extract_deadzone(row, study) for row in deadz]
@@ -546,7 +559,7 @@ def csv_trickles_legacy(study):
 
 
 def divisions(csv_data):
-    log(csv_data)
+    #log(csv_data)
     return [[float(x[1]) / x[0], float(x[3]) / x[2],
              float(x[2]) / x[0], float(x[3]) / x[1]]
             for x in csv_data if min(x) > 0]
@@ -660,7 +673,7 @@ def duplicates2(condition):
 
 
 def gap_size():
-    return timedelta(minutes=500) # maximum amount of time before we count a new run
+    return timedelta(minutes=30) # maximum amount of time before we count a new run
 
 def count_run_links(study, spacing):
     workers = [row.workerid for row in
@@ -688,59 +701,56 @@ def try_some_spacings(spacings_in_seconds):
         print space, count_run_links(db.studies[26], timedelta(seconds=space))
 
 def populate_runs(study):
+    ''' This used to split runs into multiple runs if more than gap
+    size had transpired in between hit completions.  I removed that
+    feature.'''
+
     db(db.runs.study == study).delete()
 
-    spacing = gap_size()
     workers = [row.workerid for row in
-               db((db.actions.action == 'finished')
+               db((db.actions.action == 'accept')
                   & (db.actions.study == study)) \
                    .select(db.actions.workerid, distinct=True)]
+
+    if 'bad_workers' in globals():
+        workers = [w for w in workers if w not in bad_workers]
+
     for worker in workers:
         finishes = db((db.actions.action == 'finished')
                       & (db.actions.study == study)
                       & (db.actions.workerid == worker)) \
-                      .select(db.actions.ALL, orderby=db.actions.time)
-        run = None
-        last_finish = None
-        for finish in finishes:
-            if not run:         # if first time seeing this worker's finish
-                run =  {'workerid': worker,
-                        'length': 1,
-                        'study': study,
-                        'condition': finish.condition}
-                run['start_time'] = db((db.actions.assid == finish.assid)) \
-                    .select(db.actions.time, orderby=db.actions.time, limitby=(0,1))[0]['time']
+                      .select(orderby=db.actions.time)
+        first_accept = db((db.actions.action == 'accept')
+                          &(db.actions.workerid == worker)
+                          &(db.actions.study == study)) \
+                          .select(orderby=db.actions.time,
+                                  limitby=(0,1))[0]
+        run = Storage(workerid=worker,
+                      length=len(finishes),
+                      study=study,
+                      start_time=first_accept.time,
+                      end_time=((finishes.last() and finishes.last().time)
+                                or first_accept.time),
+                      condition=first_accept.condition)
 
-            if last_finish:
-                if last_finish.time + spacing > finish.time \
-                        and finish.condition == run['condition']:
-                    run['length'] += 1
+        # Write out the run
+        db.runs.insert(**run)
 
-                    if finish.condition != run['condition']:
-                        print ('s%d worker %s\'s run switches condition at %s'
-                               % (study, worker, finish.time))
-                else:
-                    # Wrap it up
-                    run['end_time'] = finish.time
-                    db.runs.insert(**run)
-                    run = None
-
-                    # Notify me of crap if there's crap
-                    if last_finish.time + spacing > finish.time:
-                        print ('s%d worker %s\'s run switches condition at %s'
-                               % (study, worker, finish.time))
-                        
-            last_finish = finish
-
-        if run: 
-            run['end_time'] = last_finish.time
-            db.runs.insert(**run)
-            run = None
+    # Now clear all censored flags, and then mark the last ones as censored
+    db((db.runs.study==study)&(db.runs.censored==True)).update(censored=False)
+    db((db.runs.study==study)
+       &(db.runs.end_time > 
+         db().select(db.runs.end_time,
+                     orderby=~db.runs.end_time,
+                     limitby=(0,1)).first().end_time
+         - gap_size())).update(censored=True)
 
     db.commit()
-    annotate_censored_runs(study)
 
-def annotate_censored_runs(study):
+
+
+
+def annotate_censored_runs_old_and_powerful(study):
     study_die_time = auto_guess_study_die_time(study)
     buffer = gap_size()
     for run in db(db.runs.study == study).select():
@@ -766,10 +776,10 @@ def annotate_censored_runs(study):
     db.commit()
 def auto_guess_study_die_time(study):
     '''Returns the time of the 250th-from-last hit'''
-    rows = db((actions.study == study)
-              & (actions.action == 'finished')) \
-              .select(actions.time,
-                      orderby=~actions.time,
+    rows = db((db.actions.study == study)
+              & (db.actions.action == 'finished')) \
+              .select(db.actions.time,
+                      orderby=~db.actions.time,
                       limitby=(0,270))
     return rows[-1].time
 
@@ -858,6 +868,25 @@ def runs_csv(conditions, study=None):
         result = result[0:-1] + '\\n' # Drop last comma, add newline
     return result
 
+def study_runs_csv(study, filename=None):
+    conditions = sj.loads(study.conditions)
+    with open(filename or 'study_%d.csv' % study.id, 'w') as f:
+        variables = experimental_vars(study)
+        f.write('id,run_length,%s,start_time,end_time,workerid,censored,other\n'
+                % ','.join(variables))
+        for run in db(db.runs.study==study).select():
+            condition = sj.loads(run.condition.json)
+            vals = ([run.id,
+                     run.length]
+                    + [condition[key] for key in variables]
+                    + [run.start_time,
+                       run.end_time,
+                       run.workerid,
+                       run.censored,
+                       run.other])
+            f.write(','.join([str(x) for x in vals]) + '\n')
+    return 'done'
+
 def rt_ratio1(condition):
     rt = runs_trickle(condition)
     return float(rt[0][1]) / float(rt[1][1])
@@ -874,14 +903,15 @@ def work_rate_legacy(conditions):
                       .select(db.actions.workerid, distinct=True))
     return float(num_hits)/float(pageloaders)
 
-def work_rate(study, conditions):
+def work_rate(study, conditions, ignored_workers=[]):
     if study.id == 26: return work_rate_legacy(conditions)
 
     query = db.actions.id < 0
     for c in conditions:
         query = (query | (db.actions.condition == c))
 
-    query = (query) & (db.actions.study == study.id)
+    query = (query) & (db.actions.study == study.id) \
+        & (~db.actions.workerid.belongs(ignored_workers))
 
     num_hits = len(db(query&(db.actions.action == 'finished'))
                    .select(db.actions.hitid, distinct=True))
@@ -889,18 +919,18 @@ def work_rate(study, conditions):
                       .select(db.actions.workerid, distinct=True))
     return float(num_hits)/float(pageloaders)
 
-def study_work_rates(study):
+def study_work_rates(study, ignored_workers=[]):
     conditions = available_conditions(study)
     condition_specs = sj.loads(study.conditions)
     evs = experimental_vars_vals(study)
-
     data = []
     for var,vals in evs.items():
         var_data = []
         # for each value, get the conditions with that value, put them into a graph
         for val in vals:
             rate = work_rate(study,
-                             study_conditions_with(study, var, val))
+                             study_conditions_with(study, var, val),
+                             ignored_workers)
 #                              [c for c in available_conditions(study)
 #                               if sj.loads(c.json)[var] == val])
             var_data.append((val,rate))
@@ -972,7 +1002,7 @@ def regress_wr(work_rates):
 
 def work_ratio(regression_data):
     data = regression_data
-    log('%s' % regression_data)
+    #log('%s' % regression_data)
     if data[0][0] == 'price':
         ratio = data[1][1]['a'] / data[0][1]['a']
     else:
@@ -1176,7 +1206,7 @@ def claus_csv(study, extra_cols=None, extra_cols_generators=None):
                 return null
             elif isinstance(value, unicode):
                 return value.encode('utf8')
-            elif isinstance(value,gluon.sql.Reference):
+            elif isinstance(value,gluon.dal.Reference):
                 return int(value)
             elif isinstance(value, timedelta):
                 log('doing a timedelta %s' % value.seconds)
@@ -1194,7 +1224,7 @@ def claus_csv(study, extra_cols=None, extra_cols_generators=None):
                     row.append(clean(record._extra[col]))
                 else:
                     (t, f) = col.split('.')
-                    if isinstance(record.get(t, None), (gluon.sql.Row,dict)):
+                    if isinstance(record.get(t, None), (gluon.dal.Row,dict)):
                         row.append(clean(record[t][f]))
                     elif represent:
                         if runs.db[t][f].represent:
@@ -1273,7 +1303,7 @@ def captcha_csv(study):
 #                 return null
 #             elif isinstance(value, unicode):
 #                 return value.encode('utf8')
-#             elif isinstance(value,gluon.sql.Reference):
+#             elif isinstance(value,gluon.dal.Reference):
 #                 return int(value)
 #             elif isinstance(value, timedelta):
 #                 log('doing a timedelta %s' % value.seconds)
@@ -1290,7 +1320,7 @@ def captcha_csv(study):
 #                     row.append(clean(record._extra[col]))
 #                 else:
 #                     (t, f) = col.split('.')
-#                     if isinstance(record.get(t, None), (gluon.sql.Row,dict)):
+#                     if isinstance(record.get(t, None), (gluon.dal.Row,dict)):
 #                         row.append(clean(record[t][f]))
 #                     elif represent:
 #                         if runs.db[t][f].represent:
