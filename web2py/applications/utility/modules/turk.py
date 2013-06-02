@@ -253,7 +253,9 @@ def get_reviewable_hit_ids ():
 
 def get_assignments_for_hit(hitid):
     data = ask_turk('GetAssignmentsForHIT', {
-        'HITId' : hitid})
+        'HITId' : hitid,
+        'PageSize': 30
+    })
     return getsx(data, 'Assignment')
 
 def get_worker_answers(hitid):
