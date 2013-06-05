@@ -386,7 +386,7 @@ def check_daemon2(task_name, period=None):
         db.commit()
 
 def check_daemon(task_name, period=4):
-    if sqlitep: return False
+    if sqlitep: log('Scheduler is disabled in sqlite mode'); return False
     task = db.scheduler_task(uuid=task_name)
     #print ('task is %s' % (not (not task)))
     if not task or task.status not in ('QUEUED', 'ASSIGNED', 'RUNNING', 'ACTIVE') \
@@ -560,9 +560,11 @@ def make_request_vars_convenient():
 
 
 
-import hashlib
+import random
 def hash_to_bucket(string, buckets):
-    return buckets[ord(hashlib.md5(string[:7]).digest()[0]) % len(buckets)]
+    r = random.Random()
+    r.seed(string)
+    return r.choice(buckets)
 
 def sample_from_conditions(conditions, string):
     '''
