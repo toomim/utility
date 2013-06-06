@@ -6,6 +6,6 @@ routers = dict(
                )
 )
 
-routes_onerror = [
-    ('utility/500', '/utility/utiliscope/error')
-    ]
+#routes_onerror = [
+#    ('utility/500', '/utility/utiliscope/error')
+#    ]
