@@ -579,16 +579,16 @@ def sample_from_conditions(conditions, string):
 
     '''
     result = {}
-    for i,(k,v) in enumerate(conditions.items()):
+    for i,(key,value) in enumerate(conditions.items()):
         # Make sure each iteration gets different hash by prepending
         # with str(i).  By attaching to front, it won't get cut off in
         # the substring operation [:7] in hash_to_bucket
         s = str(i) + string   
                               
-        if is_singleton(v):
-            result[k] = singleton(v)
-        elif isinstance(v, list):
-            result[k] = hash_to_bucket(s, v)
+        if is_singleton(value):
+            result[key] = singleton(value)
+        elif isinstance(value, list):
+            result[key] = hash_to_bucket(s, value)
         else:
             soft_assert(False, 'Bad condition')
     return result
