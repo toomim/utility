@@ -14,9 +14,10 @@ settings.py, like:
    server_url = 'computername.local'
 
 At some point, set up a password:
-   $ python web2py.py
+   $ cd web2py; python web2py.py
    choose a password: <put something in here>
    C-c
+   $ cd ..
    $ ./serve
 
 
