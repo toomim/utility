@@ -275,19 +275,12 @@ def plot_trickle(study, time_window=None):
         plt.plot([x[0] for x in h], [x[1] for x in h], marker='.')
 
 def calc_trickle_curve(study, condition, time_window=None, log=False, as_percents=True):
-    if True:
-        query = ((db.actions.study == study.id)
-                 & (db.actions.condition == condition))
+    query = ((db.actions.study == study.id)
+             & (db.actions.condition == condition))
 
-        filter = "actions.action='finished'"
-        filter += (" and actions.study=%d and actions.condition=%d"
-                   % (study.id, condition.id))
-    else:
-        query = ((db.actions.condition == condition))
-
-        filter = "actions.action='finished'"
-        filter += (" and actions.condition=%d"
-                   % (condition.id))
+    filter = "actions.action='finished'"
+    filter += (" and actions.study=%d and actions.condition=%d"
+               % (study.id, condition.id))
 
 
     if time_window:
@@ -705,10 +698,19 @@ def populate_runs(study):
     size had transpired in between hit completions.  I removed that
     feature.'''
 
+    ## TEMPORARY -- CHANGE THIS BACK
+    #
+    # Each study from now on has an 'accept' event, but some old
+    # studies I am analyzing only have 'display' events.  These
+    # produce the same result, but 'accept' is more logical.  As soon
+    # as I'm done analyzing those studies, let's change this all to
+    # 'accept' instead of 'display'.
+    accept = 'display'
+
     db(db.runs.study == study).delete()
 
     workers = [row.workerid for row in
-               db((db.actions.action == 'accept')
+               db((db.actions.action == accept)
                   & (db.actions.study == study)) \
                    .select(db.actions.workerid, distinct=True)]
 
@@ -720,29 +722,34 @@ def populate_runs(study):
                       & (db.actions.study == study)
                       & (db.actions.workerid == worker)) \
                       .select(orderby=db.actions.time)
-        first_accept = db((db.actions.action == 'accept')
+        first_accept = db((db.actions.action == accept)
                           &(db.actions.workerid == worker)
                           &(db.actions.study == study)) \
                           .select(orderby=db.actions.time,
                                   limitby=(0,1))[0]
+
+        censored = 0 < db((db.actions.action=='work quota reached')
+                          & (db.actions.workerid == worker)
+                          & (db.actions.study == study)).count()
+
         run = Storage(workerid=worker,
                       length=len(finishes),
                       study=study,
                       start_time=first_accept.time,
                       end_time=((finishes.last() and finishes.last().time)
                                 or first_accept.time),
-                      condition=first_accept.condition)
+                      condition=first_accept.condition,
+                      censored=censored)
 
         # Write out the run
         db.runs.insert(**run)
 
-    # Now clear all censored flags, and then mark the last ones as censored
-    db((db.runs.study==study)&(db.runs.censored==True)).update(censored=False)
+    # Now mark the last runs as censored
     db((db.runs.study==study)
        &(db.runs.end_time > 
-         db().select(db.runs.end_time,
-                     orderby=~db.runs.end_time,
-                     limitby=(0,1)).first().end_time
+         db(db.runs.study==study).select(db.runs.end_time,
+                                         orderby=~db.runs.end_time,
+                                         limitby=(0,1)).first().end_time
          - gap_size())).update(censored=True)
 
     db.commit()
@@ -923,6 +930,7 @@ def study_work_rates(study, ignored_workers=[]):
     conditions = available_conditions(study)
     condition_specs = sj.loads(study.conditions)
     evs = experimental_vars_vals(study)
+
     data = []
     for var,vals in evs.items():
         var_data = []
