@@ -4,6 +4,7 @@ def scheduler_errors(N=10):
                                                           orderby=~db.scheduler_run.id)
     for error in errors:
         print error.id, db.scheduler_task[error.scheduler_task].task_name, error.traceback
+    print ('When done, you can run clear_scheduler_errors().')
 def clear_scheduler_errors():
     db(db.scheduler_run.status=='FAILED').delete()
     db(db.scheduler_task.status=='FAILED').delete()
@@ -21,7 +22,7 @@ def log_scheduler_errors(f):
         try:
             f(*args, **kwargs)
         except Exception as e:
-            debug_t('Error in %s! %s\nRun scheduler_errors() for more info' % (f.__name__,e))
+            debug_t('Error in %s! %s\nRun scheduler_errors() at ./shell for more info' % (f.__name__,e))
             raise
     return wrapper
 
@@ -106,16 +107,13 @@ def process_bonus_queue():
     try:
         for row in db().select(db.bonus_queue.ALL):
             # Skip workers that we aren't ready for yet
-            #debug_t('Checking for bonus_delay.')
             if 'bonus_delay' in globals() and bonus_delay:
                 action = db.actions(assid=row.assid, action='finished')
                 if not action:
                     logger_t.error('No finish action on bonus %s' % row.assid);
                 elif (datetime.now() - action.time).total_seconds() < bonus_delay:
-                    #logger_t.debug('Not %s minutes yet for assid %s', bonus_delay/60, row.assid)
                     continue
 
-            #debug_t('Processing bonus queue row %s' % row.id)
             try:
                 approve_and_bonus_up_to(row.hitid, row.assid, row.worker, float(row.amount), row.reason)
                 debug_t('Success!  Deleting row.')

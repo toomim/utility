@@ -1,4 +1,0 @@
-#@reboot dummyuser python web2py.py -K utility/utiliscope,utility/utiliscope,utility/utiliscope
-#@reboot dummyuser *applications/utility/cron/background_work.py
-#@reboot dummyuser *applications/utility/cron/background_work2.py
-#@reboot dummyuser python web2py.py -S utility/utiliscope -M -N -R applications/utility/cron/background_work.py -A foo

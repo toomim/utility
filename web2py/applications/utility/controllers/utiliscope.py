@@ -258,24 +258,6 @@ def launch_one_off_hit():
     debug("We added a hit to the launch queue.")
     return 'success'
 
-def background_process_1():
-    log('Processing launch queue')
-    process_launch_queue()
-    if request and request.args and request.args[0] == 'return':
-        redirect(URL(r=request, f='index'))
-    import threading
-    log('In background_process_1, ' + str(threading.activeCount()) \
-                  + ' threads are ' \
-                  + str(threading.enumerate()))
-
-def background_process_2():
-    log('Processing queues')
-    process_bonus_queue()
-    refresh_hit_status()
-    if request and request.args and request.args[0] == 'return':
-        redirect(URL(r=request, f='index'))
-
-
 
 ############################################################
 ####           Displaying Studies and Results           ####
