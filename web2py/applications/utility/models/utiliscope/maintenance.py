@@ -141,33 +141,6 @@ def pay_worker_extra(workerid, amount, reason):
 
     return turk.give_bonus(ass.assid, workerid, amount, reason)
 
-def pay_poor_souls():
-    poor_souls = db((db.hits_log.creation_time < datetime(2009, 12, 28))
-                    & (db.hits_log.creation_time > datetime(2009, 11, 1))
-                    & (db.assignments.hitid == db.hits_log.hitid)
-                    & (db.assignments.paid == 0)
-                    & (db.assignments.assid != 'None')).select(
-        orderby=db.hits_log.creation_time)
-    for row in poor_souls:
-        print row.assignments.assid, row.hits_log.hitid, row.hits_log.creation_time
-    print len(poor_souls)
-
-def unpaid_assignments(workerid = None):
-    query = (db.assignments.status == 'finished to us')
-    if workerid: query = query & (db.assignments.workerid == workerid)
-    asses = db(query).select()
-    return asses
-def approve_assignment(assid, hitid):
-    turk.approve_assignment(assid)
-    update_ass_from_mturk(hitid)
-
-def pay_unpaid_assignments(workerid = None):
-    for ass in unpaid_assignments(workerid):
-        if ass.condition:
-            price = sj.loads(db.conditions[ass.condition].json)['price']
-            assert(is_price(price))
-            enqueue_bonus(ass.assid, ass.workerid, ass.hitid, price)
-
 def add_hits_log_creation_dates():
 #     for hit in db().select(db.hits_log.ALL):
 #         hit.update_record(xmlbody = hit.xmlbody.replace('\n','')
