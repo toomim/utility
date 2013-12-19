@@ -173,6 +173,11 @@ db.define_table('hits',
                 migrate=migratep, fake_migrate=fake_migratep)
 
 db.define_table('bonus_queue',
+                # HOW THE BONUS QUEUE WORKS:
+                # For each item in the queue, we will:
+                #   - Approve the assignment (if it has an assid and hitid)
+                #   - Then bonus the worker with the bonus amount
+                #   - It will automatically find an existing assid/hitid to bonus if none is specified
                 db.Field('assid', 'text'),
                 db.Field('hitid', 'text'),
                 db.Field('worker', 'text'),
@@ -276,19 +281,20 @@ def hit_finished(bonus_amount=None, do_redirect=True):
             if not bonus_amount: bonus_amount = request.price
 
             if not request.testing:
-                enqueue_bonus(request.assid,
-                              request.workerid, 
-                              request.hitid,
+                enqueue_bonus(request.workerid, 
                               bonus_amount,
-                              request.study)
+                              request.assid,
+                              request.hitid,
+                              request.study,
+                              reason='Completed hit')
 
-                update_ass(assid=request.vars.assignmentId,
-                           hitid=request.vars.hitId,
-                           workerid=request.vars.workerId,
+                update_ass(assid=request.assid,
+                           hitid=request.hitid,
+                           workerid=request.workerid,
                            status='finished to us')
 
                 if False:
-                    worker = db.workers(workerid = request.vars.workerId)
+                    worker = db.workers(workerid = request.workerid)
                     worker.update_record(bonus_earned=worker.bonus_earned + bonus_amount)
         
     if do_redirect: redirect(turk_submit_url())
@@ -527,15 +533,15 @@ def soft_assert(pred, error_message=None):
         send_me_mail('ASSERT FAIL ' + error_message)
         log('ASSERT FAIL: ' + str(error_message))
         logger.error('ASSERT FAIL: ' + str(error_message))
-def enqueue_bonus(assid, workerid, hitid, maxamount, study=None):
-    log('Adding %s to bonus queue for ass %s'
-                  % (maxamount, assid))
+def enqueue_bonus(workerid, amount,
+                  assid=None, hitid=None, study=None, reason=None):
+    log('Adding %s to bonus queue for ass %s' % (amount, assid))
     db.bonus_queue.insert(
-        assid = assid,
         worker = workerid,
+        assid = assid,
         hitid = hitid,
-        amount = maxamount,
-        reason = 'Completed hit',
+        amount = amount,
+        reason = reason,
         study = study)
 
 response.generic_patterns = ['html']

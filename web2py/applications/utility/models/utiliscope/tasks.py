@@ -104,6 +104,13 @@ def refresh_hit_status():
 # ============== Approving Hits and Paying People Bonus =============
 @log_scheduler_errors
 def process_bonus_queue():
+    '''
+    HOW THE BONUS QUEUE WORKS:
+    For each item in the queue:
+      - Approve the assignment (if it has an assid and hitid)
+      - Then bonus the worker with the bonus amount
+      - It will automatically find an existing assid/hitid to bonus if none is specified
+    '''
     try:
         for row in db().select(db.bonus_queue.ALL):
             # Skip workers that we aren't ready for yet
@@ -115,7 +122,14 @@ def process_bonus_queue():
                     continue
 
             try:
-                approve_and_bonus_up_to(row.hitid, row.assid, row.worker, float(row.amount), row.reason)
+                if row.assid and row.hitid:
+                    try_approve_assignment(row.assid, row.hitid)
+                
+                # This will automatically look up a hitid and assid if
+                # none is specified
+                pay_worker(row.worker, float(row.amount), row.reason,
+                                    row.assid, row.hitid)
+
                 debug_t('Success!  Deleting row.')
                 db(db.bonus_queue.assid == row.assid).delete()
                 if False:
@@ -137,36 +151,57 @@ def process_bonus_queue():
         raise
     #debug('we are done with bonus queue')
 
-
-def approve_and_bonus_up_to(hitid, assid, workerid, bonusamt, reason):
+def try_approve_assignment(assid, hitid):
     ass_status = turk.assignment_status(assid, hitid)
-    debug_t('Approving $%s ass %s of status %s' %
-            (bonusamt, assid, ass_status))
+    debug_t('Approving ass %s of status %s' %
+            (assid, ass_status))
 
     if len(turk.get_assignments_for_hit(hitid)) == 0:
         raise TurkAPIError("...mturk hasn\'t updated their db yet")
-        
 
-    # First approve the assignment, but only if it's "submitted"
+    # Approve the assignment, but only if it's "submitted"
     if ass_status == u'Submitted':
         turk.approve_assignment(assid)
 
-#     if ass_status == None:
-#         log('The XML we are getting for this crapster is %s'
-#                       % turk.ask_turk_raw('GetAssignmentsForHIT', {'HITId' : hitid}))
+def lookup_recent_assignment(workerid, assid=None, hitid=None):
+    if hitid and assid: return (assid, hitid)
+
+    if not (assid and hitid):
+        # Default to assid and hitid if specified
+        assid_query = ((db.actions.assid == assid)
+                       if assid else
+                       ((db.actions.assid != 'ASSIGNMENT_ID_NOT_AVAILABLE')
+                        & (db.actions.assid != None)))
+
+        hitid_query = ((db.actions.hitid == hitid)
+                       if hitid else
+                       (db.actions.hitid != None))
+
+        # Look up a new, recent action
+        row = db(assid_query & hitid_query & (db.actions.workerid == workerid)
+                 & (db.actions.action == 'finished')) \
+            .select(db.actions.assid, db.actions.hitid,
+                    limitby=(0,1), orderby=~db.actions.time).first()
+        if not row:
+            raise TurkAPIError("Failed to find a hitid/assid for worker %s."
+                               % workerid)
+
+        return row.assid, row.hitid
+    
+def pay_worker(workerid, bonusamt, reason, assid=None, hitid=None):
+    """ Finds a recent completed assignment and hit (if not specified), and
+        pays the worker with it.
+    """
+
+    (assid, hitid) = lookup_recent_assignment(workerid, assid, hitid)
 
     if turk.assignment_status(assid, hitid) != u'Approved':
         raise TurkAPIError('Trying to bonus a hit that isn\'t ready!  it is %s'
                            % turk.assignment_status(assid, hitid))
 
-    #log('Now it must be approved.  doing bonus of $%s' % bonusamt)
-
     # Now let's give it a bonus
-    if float(bonusamt) == 0.0:
-        #log('Oh... nm this is a 0.0 bonus')
-        pass
-    else:
-        turk.give_bonus_up_to(assid, workerid, float(bonusamt), reason)
+    if float(bonusamt) > 0.0:
+        turk.give_bonus(assid, workerid, float(bonusamt), reason)
 
     # Update the assignment log and verify everything worked
     update_ass_from_mturk(hitid)
