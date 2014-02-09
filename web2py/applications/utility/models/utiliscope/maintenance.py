@@ -129,18 +129,6 @@ def update_ass_conditions():
 
 
 # ============== From When Shit Hit Fans =============
-def pay_worker_extra(workerid, amount, reason):
-    '''	Finds a recent assignment that the worker completed and pays                         
-    him with it'''
-    ass = db((db.actions.workerid==workerid)
-             &(db.actions.action=='finished')).select(orderby=~db.actions.time,
-                                                      limitby=(0,1)).first()
-    if not ass or not ass.assid:
-        log('No assignment for worker %s' % workerid)
-        return
-
-    return turk.give_bonus(ass.assid, workerid, amount, reason)
-
 def add_hits_log_creation_dates():
 #     for hit in db().select(db.hits_log.ALL):
 #         hit.update_record(xmlbody = hit.xmlbody.replace('\n','')

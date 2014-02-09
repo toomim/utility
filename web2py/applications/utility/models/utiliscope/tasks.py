@@ -114,11 +114,11 @@ def process_bonus_queue():
     try:
         for row in db().select(db.bonus_queue.ALL):
             # Skip workers that we aren't ready for yet
-            if 'bonus_delay' in globals() and bonus_delay:
+            if row.delay and row.delay > 0:
                 action = db.actions(assid=row.assid, action='finished')
                 if not action:
                     logger_t.error('No finish action on bonus %s' % row.assid);
-                elif (datetime.now() - action.time).total_seconds() < bonus_delay:
+                elif (datetime.now() - action.time).total_seconds() < row.delay:
                     continue
 
             try:
@@ -247,7 +247,11 @@ def schedule_hit(launch_date, study, task, othervars):
                    othervars = sj.dumps(othervars))
     db.commit()
 def launch_study(num_hits, task, name, description, hit_params=None):
+    # Hit params default to what's in options, but can also be overridden here
     hit_params = hit_params or {}
+    params = options[task] and options[task]['hit_params'] or {}
+    params.update(hit_params or {})
+    
     conditions = options[task]
     study = get_or_make_one(db.studies.name == name,
                             db.studies,
@@ -255,13 +259,14 @@ def launch_study(num_hits, task, name, description, hit_params=None):
                              'launch_date' : datetime.now(),
                              'description' : description,
                              'task' : task,
-                             'hit_params' : sj.dumps(hit_params, sort_keys=True)})
+                             'hit_params' : sj.dumps(params, sort_keys=True)})
     study.update_record(conditions = sj.dumps(conditions, sort_keys=True))
     for i in range(num_hits):
         schedule_hit(datetime.now(), study.id, task, {})
     db.commit()
-def launch_test_study(task, num_hits=1):
+def launch_test_study(task, num_hits=1, extra_tag=None):
     study_name = 'teststudy %s' % task
+    if extra_tag: study_name += ' ' + extra_tag
     launch_study(num_hits, task, study_name, " ... test ...")
 
 
