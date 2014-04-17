@@ -672,6 +672,13 @@ def choose_condition():
                                        condition=get_condition(request.condition),
                                        workerid=request.workerid, time_assigned=now)
     
+    # If this is a CHANGE of condition for the worker (because they
+    # were working in a prior phase), let's set a flag so that the
+    # view can tell the worker to pay attention to the difference
+    if db((db.experimental_assignments.phase < request.phase)
+          & (db.experimental_assignments.study == request.study)
+          & (db.experimental_assignments.workerid == request.workerid)).count() > 0:
+        request.new_phase = True
 
 def condition_by_index(conditions, index):
     '''Takes a dictionary of all conditions, that maps each variable to
