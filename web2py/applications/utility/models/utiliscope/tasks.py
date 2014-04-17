@@ -247,27 +247,37 @@ def schedule_hit(launch_date, study, task, othervars):
                    othervars = sj.dumps(othervars))
     db.commit()
 def launch_study(num_hits, task, name, description, hit_params=None):
-    # Hit params default to what's in options, but can also be overridden here
-    hit_params = hit_params or {}
-    params = options[task] and options[task]['hit_params'] or {}
+    # Hit params default to what's in options, but can be overridden here
+    params = task in options and 'hit_params' in options[task] and options[task]['hit_params'] or {}
     params.update(hit_params or {})
-    
+
     conditions = options[task]
     study = get_or_make_one(db.studies.name == name,
                             db.studies,
                             {'name' : name,
                              'launch_date' : datetime.now(),
-                             'description' : description,
-                             'task' : task,
-                             'hit_params' : sj.dumps(params, sort_keys=True)})
-    study.update_record(conditions = sj.dumps(conditions, sort_keys=True))
+                             'task' : task})
+    study.update_record(description = description,
+                        conditions = sj.dumps(conditions, sort_keys=True),
+                        hit_params = sj.dumps(params, sort_keys=True))
+
     for i in range(num_hits):
         schedule_hit(datetime.now(), study.id, task, {})
     db.commit()
-def launch_test_study(task, num_hits=1, extra_tag=None):
+def launch_test_study(task, num_hits=1, nonce=None):
     study_name = 'teststudy %s' % task
-    if extra_tag: study_name += ' ' + extra_tag
+    if nonce: study_name += ' %s' % nonce
     launch_study(num_hits, task, study_name, " ... test ...")
+
+
+def launch_pinger(num_hits, delay_seconds, study_id, task):
+    time = datetime.now()
+    delay = timedelta(seconds=delay_seconds)
+    for i in range(num_hits):
+        time = time + delay
+        log('Scheduling at %s' % time)
+        schedule_hit(time, study_id, task, {})
+    db.commit()
 
 
 # ============== Launch a Eenie-Weenie Single Hit =============

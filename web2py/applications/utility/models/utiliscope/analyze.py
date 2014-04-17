@@ -924,6 +924,7 @@ def work_rate(study, conditions, ignored_workers=[]):
                    .select(db.actions.hitid, distinct=True))
     pageloaders = len(db(query&(db.actions.action == 'display'))
                       .select(db.actions.workerid, distinct=True))
+    if pageloaders == 0: return 0
     return float(num_hits)/float(pageloaders)
 
 def study_work_rates(study, ignored_workers=[]):
