@@ -22,23 +22,24 @@ def prep_test(as_preview=False):
                              vars=request.vars, args=request.args
                              )
 
-    # Make a new url... where we delete 'test/' and replace it with
-    # arg0, then we shift the other args into place
+    # OVERALL GOAL:
+    #   Make a new url... where we delete 'test/' and replace it with
+    #   arg0, then we shift the other args into place
 
-    # Go from '/test/controller?blah' to '/controller?blah'
+    # 1. Go from '/test/controller?blah' to '/controller?blah'
     controller = request.args[0]
     request.args = request.args[1:]
-    # If there's anything left in the args, pop into the function
+    # 2. If there's anything left in the args, pop into the function
     if request.args:
         function = request.args[0]
         request.args = request.args[1:]
     else:
         function = 'index'
 
-    # Turn on testing
+    # 3. Turn on testing
     request.get_vars.testing = request.vars.testing = True
 
-    # Make up an assignment, worker, and hit
+    # 4. Make up an assignment, worker, and hit
     import random
     def randstring(n):
         return ''.join([str(random.randrange(10)) for i in range(n)])
@@ -130,6 +131,7 @@ def submit():
     redirect(turk_submit_url())
 
 def submit_first_hit():
+    log('Request vars is %s %s' % (request.workerid, request.study))
     soft_assert(db((db.actions.workerid == request.vars.workerid)
                    & (db.actions.action == 'finished')).count() < 1)
     hit_finished(bonus_amount=request.first_time_bonus or 0.51,
