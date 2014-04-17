@@ -653,11 +653,17 @@ def choose_condition():
 
     # Else, let's make a new one.
 
-    # Choose a condition.  We'll grab the next one in round-robin fashion.
-    num_choices_made = db((db.experimental_assignments.phase==request.phase)
-                          &(db.experimental_assignments.study==request.study)).count()
-    request.condition = condition_by_index(experimental_vars_vals(request.study),
-                                           num_choices_made)
+    # Choose a condition.  First, give special conditions a shot
+    for probability, condition in options[request.task]['special_conditions'] or []:
+        if random.random() < probability:
+            request.condition = condition.copy()
+            break
+    # If none of them match, grab the next condition in round-robin fashion.
+    else:
+        num_choices_made = db((db.experimental_assignments.phase==request.phase)
+                              &(db.experimental_assignments.study==request.study)).count()
+        request.condition = condition_by_index(experimental_vars_vals(request.study),
+                                               num_choices_made)
 
     # Now add the singleton variables back into the condition... (need
     # to make this more consistent between singleton option variables
