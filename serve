@@ -29,8 +29,9 @@ except LoadSettingsOnly:
 ## Run the processes
 DEVNULL = open('/dev/null', 'w')
 app = 'utility/utiliscope'
-server    = subprocess.Popen(['python', 'web2py.py', '-a', '<recycle>', '-i',
-                              str(server_url), '-p', str(server_port)#,
+server    = subprocess.Popen(['python', 'web2py.py', '-a', '<recycle>',
+                              '-c', 'temp_ssl.crt', '-k', 'temp_ssl.key',
+                              '-i', str(server_url), '-p', str(server_port)#,
                               #'--minthreads=20', '--maxthreads=200'
                               ])
 
